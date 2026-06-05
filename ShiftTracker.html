@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Shift Performance Tracker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;900&family=Inter:wght@400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#ffffff;color:#0f0f0f;font-family:'Inter',sans-serif;min-height:100vh;font-size:13px}
+button,select,input{font-family:inherit;cursor:pointer}
+::-webkit-scrollbar{width:5px;height:5px;background:#f0f0f0}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+.hdr{background:linear-gradient(135deg,#0f0f0f,#1a1a1a 60%);border-bottom:1px solid rgba(240,210,20,0.2);padding:16px 24px 12px}
+.hdr-title{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;letter-spacing:2px;color:#f0d214;line-height:1}
+.hdr-sub{font-size:10px;color:#444;letter-spacing:1px;margin-top:3px}
+.hdr-badge{display:inline-block;padding:2px 10px;background:rgba(240,210,20,0.12);border:1px solid rgba(240,210,20,0.25);border-radius:20px;font-size:10px;color:#f0d214;margin-left:12px;vertical-align:middle}
+.tabs{display:flex;background:#f7f7f7;border-bottom:1px solid #e5e5e5;padding:0 24px;overflow-x:auto}
+.tab{padding:10px 16px;background:transparent;border:none;border-bottom:2px solid transparent;color:#484860;font-size:11px;font-weight:600;letter-spacing:.5px;white-space:nowrap;transition:all .15s}
+.tab.on{color:#f0d214;border-bottom-color:#f0d214}
+.wrap{padding:16px 24px;max-width:1300px;background:#ffffff}
+
+/* UPLOAD */
+.dropzone{position:relative;border:2px dashed #d0d0d0;border-radius:10px;padding:20px 22px;text-align:center;cursor:pointer;background:#fafafa;transition:all .2s;margin-bottom:16px}
+.dropzone:hover,.dropzone.drag{border-color:#f0d214;background:rgba(240,210,20,.05)}
+.dz-icon{font-size:26px;margin-bottom:5px}
+.dz-label{color:#555;font-size:12px}
+.dz-sub{color:#333;font-size:10px;margin-top:3px}
+.errmsg{color:#f87171;font-size:11px;padding:8px 12px;background:rgba(248,113,113,.08);border-radius:6px;margin-bottom:12px;display:none}
+
+/* STAT CARDS */
+.statgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px;margin-bottom:18px}
+.statcard{background:#ffffff;border:1px solid #e8e8e8;border-radius:9px;padding:12px 14px}
+.statlbl{font-size:9px;color:#444;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.statval{font-size:20px;font-weight:700;color:#0f0f0f}
+.statsub{font-size:10px;color:#999;margin-top:2px}
+
+/* CONTROLS */
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.fbtn{padding:4px 12px;border-radius:20px;border:1px solid #e0e0e0;background:transparent;color:#555;font-size:10px;transition:all .15s}
+.fbtn.on{border-color:#f0d214;background:rgba(240,210,20,.12);color:#f0d214}
+.csel{background:#0f1018;border:1px solid #e0e0e0;color:#666;border-radius:6px;padding:4px 9px;font-size:10px;outline:none}
+
+/* SECTION HEADERS */
+.sec-hdr{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:#666;letter-spacing:1px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #e5e5e5}
+
+/* SHIFT COLOURS */
+.pill{border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;white-space:nowrap}
+
+/* OPERATOR CARDS */
+.op-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;margin-bottom:20px}
+.op-card{background:rgba(255,255,255,.025);border:1px solid #e8e8e8;border-radius:10px;padding:14px 16px;transition:border-color .2s}
+.op-card:hover{border-color:#f0d214}
+.op-card.flag-support{border-left:3px solid #f59e0b}
+.op-card.flag-improve{border-left:3px solid #34d399}
+.op-name{font-weight:700;font-size:14px;color:#0f0f0f;margin-bottom:4px}
+.op-meta{display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.flag-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px}
+.flag-support-badge{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:#f59e0b}
+.flag-improve-badge{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);color:#34d399}
+
+/* METRIC ROWS */
+.metric-bar-row{margin-bottom:7px}
+.metric-header{display:flex;justify-content:space-between;margin-bottom:3px}
+.metric-name{font-size:9px;color:#555;letter-spacing:.5px;text-transform:uppercase}
+.metric-val{font-size:11px;font-weight:600}
+.bar-bg{height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width .4s}
+
+/* TREND INDICATOR */
+.trend{font-size:10px;font-weight:700;margin-left:5px}
+.trend-up{color:#34d399}
+.trend-dn{color:#f87171}
+.trend-eq{color:#555}
+
+/* SHIFT COMPARISON TABLE */
+.cmp-wrap{overflow-x:auto;margin-bottom:20px}
+.cmp-table{border-collapse:collapse;font-size:11px;width:100%}
+.cmp-table th{padding:8px 12px;color:#444;border-bottom:1px solid #e5e5e5;font-size:10px;letter-spacing:.5px;text-transform:uppercase;text-align:center}
+.cmp-table th:first-child{text-align:left}
+.cmp-table td{padding:8px 12px;border-bottom:1px solid #0e0e18;text-align:center}
+.cmp-table td:first-child{text-align:left;font-weight:600;color:#333}
+.cmp-table tr:hover td{background:#fafafa}
+
+/* SPOTLIGHT */
+.spotlight-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:20px}
+.spotlight-card{border-radius:9px;padding:14px 16px}
+.spotlight-improve{background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.2)}
+.spotlight-support{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2)}
+.spotlight-title{font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:8px}
+.spotlight-name{font-size:15px;font-weight:700;color:#0f0f0f;margin-bottom:3px}
+.spotlight-detail{font-size:11px;color:#666;line-height:1.5}
+
+/* MINI CHART */
+.mini-chart{height:36px;display:flex;align-items:flex-end;gap:2px;margin-top:8px}
+.mini-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px;transition:height .3s}
+
+/* EMPTY */
+.empty{color:#bbb;text-align:center;padding:40px;font-size:12px}
+
+/* LEGEND */
+.legend{margin-top:16px;display:flex;gap:16px;font-size:9px;color:#333;flex-wrap:wrap;border-top:1px solid #e5e5e5;padding-top:12px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div style="display:flex;align-items:flex-end;gap:11px">
+    <span style="font-size:22px">📈</span>
+    <div>
+      <div class="hdr-title">SHIFT PERFORMANCE TRACKER<span class="hdr-badge">Day-to-Day</span></div>
+      <div class="hdr-sub" id="hdr-sub">Upload SmartLift data to get started</div>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab on" data-tab="dash">📊 Dashboard</button>
+  <button class="tab" data-tab="ops">👤 Operators</button>
+  <button class="tab" data-tab="cmp">⚖ Shift Comparison</button>
+  <button class="tab" data-tab="spot">🌟 Spotlight</button>
+  <button class="tab" data-tab="areas">🗂 Area Assignments</button>
+</div>
+
+<div class="wrap">
+      <div class="dropzone" id="dz">
+    <input type="file" id="fi" accept=".xlsx,.xls" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2"/>
+    <div class="dz-icon" id="dz-icon" style="pointer-events:none">📊</div>
+    <div class="dz-label" id="dz-lbl" style="pointer-events:none">Drop SmartLift Excel export here, or click to browse</div>
+    <div class="dz-sub" style="pointer-events:none">.xlsx or .xls — daily, weekly or monthly exports</div>
+  </div>
+  <div class="errmsg" id="errmsg"></div>
+  <div id="tab-dash"></div>
+  <div id="tab-ops" style="display:none"></div>
+  <div id="tab-cmp" style="display:none"></div>
+  <div id="tab-spot" style="display:none"></div>
+  <div id="tab-areas" style="display:none"></div>
+  <div class="legend" id="legend" style="display:none">
+    <span style="color:#f59e0b">&#9646; Needs Support</span>
+    <span style="color:#34d399">&#9646; Most Improved</span>
+    <span style="color:#555">Trends based on last 2 periods with data</span>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+var SC = {
+  'A Shift':    {bg:'#ff6b35',tx:'#fff'},
+  'B shift':    {bg:'#4ecdc4',tx:'#fff'},
+  'C Shift':    {bg:'#45b7d1',tx:'#fff'},
+  'D Shift':    {bg:'#96ceb4',tx:'#1a1a1a'},
+  'Days Team':  {bg:'#ffeaa7',tx:'#1a1a1a'},
+  'Agency':     {bg:'#dfe6e9',tx:'#1a1a1a'},
+  'Engineering':{bg:'#e6be28',tx:'#fff'},
+};
+var SHIFTS = ['A Shift','B shift','C Shift','D Shift','Days Team','Agency','Engineering'];
+var MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+var METRICS = [
+  {key:'ign',  label:'Ignition Hours',    col:'Hours in Ignition',    color:'#f0d214', unit:'h', higherBetter:true},
+  {key:'mot',  label:'Motion Hours',      col:'Hours in Motion',      color:'#34d399', unit:'h', higherBetter:true},
+  {key:'load', label:'Load Lift Hours',   col:'Load lifting hours',   color:'#60a5fa', unit:'h', higherBetter:true},
+  {key:'idle', label:'Idle Hours',        col:'Hours Idling',         color:'#f87171', unit:'h', higherBetter:false},
+  {key:'ignEv',label:'Ignition Events',   col:'Ignition Events',      color:'#a78bfa', unit:'',  higherBetter:true},
+  {key:'motEv',label:'Motion Events',     col:'Motion events',        color:'#6ee7b7', unit:'',  higherBetter:true},
+  {key:'loadEv',label:'Load Events',      col:'Load Events',          color:'#93c5fd', unit:'',  higherBetter:true},
+  {key:'idleEv',label:'Idling Events',    col:'Idling Events',        color:'#fca5a5', unit:'',  higherBetter:false},
+  {key:'wwl',  label:'Work Without Load', col:'Work without load',    color:'#fbbf24', unit:'h', higherBetter:false},
+  {key:'dur',  label:'Work Day Duration', col:'Duration of Work Day', color:'#94a3b8', unit:'h', higherBetter:null},
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+var opMap = {}, areaMap = {}, shiftOverrides = {};
+var shiftF = 'All', activeTab = 'dash', arShift = '', opSearch = '';
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+var fmt = function(h,unit) {
+  if (!h || isNaN(h) || h < 0) return '0'+(unit==='h'?'h 00m':'');
+  if (unit === 'h') return Math.floor(h)+'h '+String(Math.round((h%1)*60)).padStart(2,'0')+'m';
+  return Math.round(h)+'';
+};
+var esc = function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+var pill = function(s){ var c=SC[s]||{bg:'#444',tx:'#fff'}; return '<span class="pill" style="background:'+c.bg+';color:'+c.tx+'">'+esc(s||'?')+'</span>'; };
+var wk = function(ds){ var d=new Date(ds); if(isNaN(d))return null; var t=new Date(d); t.setDate(d.getDate()-((d.getDay()+6)%7)+3); var j=new Date(t.getFullYear(),0,4); return t.getFullYear()+'-W'+String(Math.ceil(((t-j)/864e5+1)/7)).padStart(2,'0'); };
+var mo = function(ds){ var d=new Date(ds); return isNaN(d)?null:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); };
+var isRemoved = function(name){ return shiftOverrides[name]==='__removed__'; };
+var effShift = function(op){ return shiftOverrides[op.name]||op.shift; };
+
+// ── XLSX PARSER (same proven approach as incentive tool) ──────────────────────
+async function readXLSX(file) {
+  var buf = await file.arrayBuffer();
+  var bytes = new Uint8Array(buf);
+  var files = {};
+  var i = 0;
+  while (i < bytes.length - 4) {
+    if (bytes[i]===0x50&&bytes[i+1]===0x4B&&bytes[i+2]===0x03&&bytes[i+3]===0x04) {
+      var comp = bytes[i+8]|(bytes[i+9]<<8);
+      var csize = bytes[i+18]|(bytes[i+19]<<8)|(bytes[i+20]<<16)|(bytes[i+21]<<24);
+      var fnlen = bytes[i+26]|(bytes[i+27]<<8);
+      var exlen = bytes[i+28]|(bytes[i+29]<<8);
+      var fname = new TextDecoder().decode(bytes.slice(i+30,i+30+fnlen));
+      var dataStart = i+30+fnlen+exlen;
+      var compData = bytes.slice(dataStart, dataStart+csize);
+      if (fname.endsWith('.xml')||fname.endsWith('.rels')) {
+        var text = '';
+        if (comp===0) {
+          text = new TextDecoder().decode(compData);
+        } else if (comp===8) {
+          try {
+            var ds = new DecompressionStream('deflate-raw');
+            var w = ds.writable.getWriter(); var r = ds.readable.getReader();
+            w.write(compData); w.close();
+            var chunks = [], done = false;
+            while (!done) { var res = await r.read(); if(res.done){done=true;}else{chunks.push(res.value);} }
+            var total = new Uint8Array(chunks.reduce(function(s,c){return s+c.length;},0));
+            var off = 0; chunks.forEach(function(c){total.set(c,off);off+=c.length;});
+            text = new TextDecoder().decode(total);
+          } catch(e) { text=''; }
+        }
+        if (text) files[fname] = text;
+      }
+      i = dataStart + csize;
+    } else { i++; }
+  }
+  var ssXml = files['xl/sharedStrings.xml']||'';
+  var shared = parseSharedStrings(ssXml);
+  var wsKey = Object.keys(files).find(function(k){return /xl\/worksheets\/sheet\d/.test(k);})||'';
+  var wsXml = files[wsKey]||'';
+  if (!wsXml) throw new Error('Could not find worksheet. Files: '+Object.keys(files).join(', '));
+  return parseSheet(wsXml, shared);
+}
+
+function parseSharedStrings(xml) {
+  if (!xml) return [];
+  var strings = [], siRe = /<si>([\s\S]*?)<\/si>/g, tRe = /<t(?:\s[^>]*)?>([^<]*)<\/t>/g, si;
+  while ((si=siRe.exec(xml))!==null) {
+    var block=si[1], text='', t; tRe.lastIndex=0;
+    while ((t=tRe.exec(block))!==null) text+=decodeXML(t[1]);
+    strings.push(text);
+  }
+  return strings;
+}
+function decodeXML(s){ return s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'"); }
+function colLetterToIndex(letters){ var n=0; for(var i=0;i<letters.length;i++) n=n*26+(letters.charCodeAt(i)-64); return n-1; }
+
+function parseSheet(xml, shared) {
+  var rows=[], rowRe=/<row\b[^>]*>([\s\S]*?)<\/row>/g, cellRe=/<c\b([^>]*)>([\s\S]*?)<\/c>/g, vRe=/<v[^>]*>([^<]*)<\/v>/, rowMatch;
+  while ((rowMatch=rowRe.exec(xml))!==null) {
+    var cells={}, cellMatch; cellRe.lastIndex=0;
+    while ((cellMatch=cellRe.exec(rowMatch[1]))!==null) {
+      var attrs=cellMatch[1], content=cellMatch[2];
+      var refM=attrs.match(/\br="([^"]+)"/); if(!refM)continue;
+      var letters=refM[1].replace(/[0-9]/g,''), idx=colLetterToIndex(letters);
+      var typeM=attrs.match(/\bt="([^"]+)"/), t=typeM?typeM[1]:'';
+      var vM=vRe.exec(content), val='';
+      if (t==='s') { val=vM?(shared[parseInt(vM[1])]||''):''; }
+      else if (t==='inlineStr') { var tM=/<t[^>]*>([^<]*)<\/t>/.exec(content); val=tM?decodeXML(tM[1]):''; }
+      else { val=vM?(isNaN(parseFloat(vM[1]))?vM[1]:parseFloat(vM[1])):''; }
+      cells[idx]=val;
+    }
+    rows.push(cells);
+  }
+  if (!rows.length) return [];
+  var headerRowIdx=0;
+  for (var i=0;i<Math.min(rows.length,10);i++) {
+    if (Object.values(rows[i]).map(function(v){return String(v).trim();}).indexOf('Operator')!==-1) { headerRowIdx=i; break; }
+  }
+  var headerMap=rows[headerRowIdx], result=[];
+  for (var j=headerRowIdx+1;j<rows.length;j++) {
+    var cellMap=rows[j]; if(!Object.keys(cellMap).length)continue;
+    var obj={}; for (var idx in headerMap) obj[headerMap[idx]]=cellMap[idx]!==undefined?cellMap[idx]:'';
+    result.push(obj);
+  }
+  return result;
+}
+
+// ── PARSE ROWS → opMap ────────────────────────────────────────────────────────
+function parseRows(rows) {
+  var map = {};
+  for (var i=0;i<rows.length;i++) {
+    var row=rows[i];
+    var name=String(row['Operator']||'').trim(); if(!name)continue;
+    var shift=String(row['Group']||'').trim();
+    var ds=String(row['Work day Start Date']||'').substring(0,10);
+    var id=String(row['Operator ID']||'');
+    var rec = {ds:ds};
+    METRICS.forEach(function(m){ rec[m.key]=parseFloat(row[m.col])||0; });
+    if (!map[name]) map[name]={name:name,shift:shift,id:id,records:[]};
+    map[name].records.push(rec);
+  }
+  return map;
+}
+
+// ── AGGREGATION HELPERS ───────────────────────────────────────────────────────
+function activeOps() {
+  return Object.values(opMap).filter(function(op){ return !isRemoved(op.name); });
+}
+
+function opRecords(op, pf) {
+  var recs = op.records.filter(function(r){ return METRICS.some(function(m){return r[m.key]>0;}); });
+  if (pf && pf!=='all') {
+    if (pf.startsWith('W:')){ var k=pf.slice(2); recs=recs.filter(function(r){return wk(r.ds)===k;}); }
+    if (pf.startsWith('M:')){ var k=pf.slice(2); recs=recs.filter(function(r){return mo(r.ds)===k;}); }
+  }
+  return recs;
+}
+
+function avgMetric(recs, key) {
+  var active = recs.filter(function(r){return r[key]>0;});
+  if (!active.length) return 0;
+  return active.reduce(function(s,r){return s+r[key];},0)/active.length;
+}
+
+function getPeriods() {
+  var ws=new Set(), ms=new Set();
+  Object.values(opMap).forEach(function(op){ op.records.forEach(function(r){
+    if (METRICS.some(function(m){return r[m.key]>0;})) {
+      var w=wk(r.ds); if(w)ws.add(w);
+      var m=mo(r.ds); if(m)ms.add(m);
+    }
+  });});
+  return {weeks:[...ws].sort().reverse(), months:[...ms].sort().reverse()};
+}
+
+// Trend: compare last 2 periods for an operator/metric
+function getTrend(op, key) {
+  var P=getPeriods();
+  var periods = P.weeks.length>=2 ? P.weeks.slice(0,2).map(function(w){return 'W:'+w;}) :
+                P.months.length>=2 ? P.months.slice(0,2).map(function(m){return 'M:'+m;}) : [];
+  if (periods.length<2) return 0;
+  var r0=opRecords(op,periods[0]), r1=opRecords(op,periods[1]);
+  if (!r0.length||!r1.length) return 0;
+  var a0=avgMetric(r0,key), a1=avgMetric(r1,key);
+  if (a1===0) return 0;
+  return ((a0-a1)/a1)*100;
+}
+
+// Flag: needs support = idle trending up >15% OR ignition trending down >15% for 2+ periods
+function needsSupport(op) {
+  var idleTrend = getTrend(op,'idle');
+  var ignTrend  = getTrend(op,'ign');
+  return idleTrend > 15 || ignTrend < -15;
+}
+
+// Flag: most improved = ignition trending up >10% AND/OR idle trending down >10%
+function mostImproved(op) {
+  var idleTrend = getTrend(op,'idle');
+  var ignTrend  = getTrend(op,'ign');
+  return ignTrend > 10 || idleTrend < -10;
+}
+
+// ── FILE HANDLER ──────────────────────────────────────────────────────────────
+async function handleFile(file) {
+  if (!file) return;
+  document.getElementById('dz-icon').textContent='⏳';
+  document.getElementById('dz-lbl').textContent='Reading '+file.name+'...';
+  document.getElementById('errmsg').style.display='none';
+  try {
+    var rows = await readXLSX(file);
+    if (!rows.length) throw new Error('No data rows found.');
+    opMap = parseRows(rows);
+    var n = Object.keys(opMap).length;
+    if (!n) throw new Error('Parsed '+rows.length+' rows but found no operators. Columns: '+Object.keys(rows[0]).join(', '));
+    Object.keys(opMap).forEach(function(nm){ if(!areaMap[nm]) areaMap[nm]='Dept Avg'; });
+    document.getElementById('hdr-sub').textContent='Loaded: '+file.name+' — '+n+' operators';
+    document.getElementById('dz-icon').textContent='✅';
+    document.getElementById('dz-lbl').textContent='Loaded '+file.name+' — drop again to refresh';
+    render();
+  } catch(e) {
+    document.getElementById('dz-icon').textContent='❌';
+    document.getElementById('dz-lbl').textContent='Error reading file';
+    var el=document.getElementById('errmsg'); el.textContent=e.message; el.style.display='block';
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render() {
+  renderDash();
+  if (activeTab==='ops')   renderOps();
+  if (activeTab==='cmp')   renderCmp();
+  if (activeTab==='spot')  renderSpot();
+  if (activeTab==='areas') renderAreas();
+  document.getElementById('legend').style.display='flex';
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function renderDash() {
+  var ops = activeOps().filter(function(op){ return shiftF==='All'||effShift(op)===shiftF; });
+  var allRecs = [];
+  ops.forEach(function(op){ opRecords(op,'all').forEach(function(r){allRecs.push(r);}); });
+
+  var shiftsPresent = ['All'].concat(SHIFTS.filter(function(s){ return activeOps().some(function(o){return effShift(o)===s;}); }));
+  var sbtns = shiftsPresent.map(function(s){
+    return '<button class="fbtn'+(shiftF===s?' on':'')+'" onclick="setShift(\''+esc(s)+'\')">'+esc(s)+'</button>';
+  }).join('');
+
+  var supportCount   = ops.filter(needsSupport).length;
+  var improvedCount  = ops.filter(mostImproved).length;
+  var activeDays     = new Set(allRecs.map(function(r){return r.ds;})).size;
+
+  var statCards = [
+    {l:'Operators',      v:ops.length,      s:'in selected shift',    c:'#f0d214'},
+    {l:'Needs Support',  v:supportCount,    s:'trending negatively',   c:'#f59e0b'},
+    {l:'Most Improved',  v:improvedCount,   s:'trending positively',   c:'#34d399'},
+    {l:'Days of Data',   v:activeDays,      s:'across all uploads',    c:'#60a5fa'},
+  ];
+
+  var stats = '<div class="statgrid">';
+  statCards.forEach(function(c){
+    stats += '<div class="statcard"><div class="statlbl">'+c.l+'</div><div class="statval" style="color:'+c.c+'">'+c.v+'</div><div class="statsub">'+c.s+'</div></div>';
+  });
+
+  // Shift averages for all metrics
+  METRICS.forEach(function(m){
+    if (allRecs.length===0) return;
+    var active = allRecs.filter(function(r){return r[m.key]>0;});
+    var avg = active.length ? active.reduce(function(s,r){return s+r[m.key];},0)/active.length : 0;
+    stats += '<div class="statcard"><div class="statlbl">Avg '+m.label+'</div><div class="statval" style="color:'+m.color+'">'+fmt(avg,m.unit)+'</div><div class="statsub">per working day</div></div>';
+  });
+  stats += '</div>';
+
+  // Recent activity table
+  var P = getPeriods();
+  var recentPeriods = P.weeks.slice(0,6);
+  var table = '';
+  if (recentPeriods.length) {
+    table += '<div class="sec-hdr" style="margin-top:4px">RECENT WEEKS — SHIFT AVERAGES</div>';
+    table += '<div class="cmp-wrap"><table class="cmp-table"><thead><tr>';
+    table += '<th>WEEK</th>';
+    METRICS.slice(0,4).forEach(function(m){ table += '<th>'+m.label.toUpperCase()+'</th>'; });
+    table += '<th>OPERATORS</th></tr></thead><tbody>';
+    recentPeriods.forEach(function(period,pi){
+      var pRecs=[], pOps=new Set();
+      activeOps().filter(function(op){return shiftF==='All'||effShift(op)===shiftF;}).forEach(function(op){
+        opRecords(op,'W:'+period).forEach(function(r){pRecs.push(r); pOps.add(op.name);});
+      });
+      var parts=period.split('-W');
+      table += '<tr style="background:'+(pi%2===0?'#fafafa':'transparent')+'">';
+      table += '<td style="color:#666;font-weight:600">Wk '+parts[1]+' '+parts[0]+'</td>';
+      METRICS.slice(0,4).forEach(function(m){
+        var active=pRecs.filter(function(r){return r[m.key]>0;});
+        var avg=active.length?active.reduce(function(s,r){return s+r[m.key];},0)/active.length:0;
+        table += '<td style="color:'+m.color+'">'+fmt(avg,m.unit)+'</td>';
+      });
+      table += '<td style="color:#555">'+pOps.size+'</td>';
+      table += '</tr>';
+    });
+    table += '</tbody></table></div>';
+  }
+
+  document.getElementById('tab-dash').innerHTML =
+    '<div class="controls">'+sbtns+'</div>' + stats + table;
+}
+
+// ── OPERATORS ─────────────────────────────────────────────────────────────────
+function renderOps() {
+  var ops = activeOps()
+    .filter(function(op){ return shiftF==='All'||effShift(op)===shiftF; })
+    .filter(function(op){ return !opSearch||op.name.toLowerCase().indexOf(opSearch.toLowerCase())!==-1; })
+    .sort(function(a,b){ return a.name.localeCompare(b.name); });
+
+  var shiftsPresent = ['All'].concat(SHIFTS.filter(function(s){ return activeOps().some(function(o){return effShift(o)===s;}); }));
+  var sbtns = shiftsPresent.map(function(s){
+    return '<button class="fbtn'+(shiftF===s?' on':'')+'" onclick="setShift(\''+esc(s)+'\')">'+esc(s)+'</button>';
+  }).join('');
+
+  var cards = '';
+  ops.forEach(function(op){
+    var recs = opRecords(op,'all');
+    if (!recs.length) return;
+    var sup = needsSupport(op), imp = mostImproved(op);
+    var flagCls = sup?' flag-support':imp?' flag-improve':'';
+    var flagBadge = sup?'<span class="flag-badge flag-support-badge">Needs Support</span>':
+                    imp?'<span class="flag-badge flag-improve-badge">Most Improved</span>':'';
+
+    cards += '<div class="op-card'+flagCls+'">';
+    cards += '<div class="op-name">'+esc(op.name)+'</div>';
+    cards += '<div class="op-meta">'+pill(effShift(op))+flagBadge+'<span style="font-size:10px;color:#444">'+recs.length+' days</span></div>';
+
+    METRICS.slice(0,6).forEach(function(m){
+      var avg = avgMetric(recs, m.key);
+      if (avg===0) return;
+      var trend = getTrend(op, m.key);
+      var trendHtml = '';
+      if (Math.abs(trend)>5) {
+        var better = (trend>0)===m.higherBetter;
+        var sym = trend>0?'&#9650;':'&#9660;';
+        trendHtml = '<span class="trend '+(better?'trend-up':'trend-dn')+'">'+sym+' '+Math.abs(Math.round(trend))+'%</span>';
+      }
+      var maxVal = 12;
+      var pct = Math.min(100, Math.round(avg/maxVal*100));
+      cards += '<div class="metric-bar-row">';
+      cards += '<div class="metric-header"><span class="metric-name">'+m.label+'</span><span class="metric-val" style="color:'+m.color+'">'+fmt(avg,m.unit)+trendHtml+'</span></div>';
+      cards += '<div class="bar-bg"><div class="bar-fill" style="width:'+pct+'%;background:'+m.color+'"></div></div>';
+      cards += '</div>';
+    });
+
+    // Mini trend chart for ignition (last 8 periods)
+    var P=getPeriods();
+    var trendPeriods = P.weeks.slice(0,8).reverse();
+    if (trendPeriods.length>1) {
+      var vals = trendPeriods.map(function(w){
+        var r=opRecords(op,'W:'+w);
+        return r.length?avgMetric(r,'ign'):0;
+      });
+      var maxV = Math.max.apply(null,vals)||1;
+      cards += '<div style="margin-top:8px"><div style="font-size:9px;color:#bbb;margin-bottom:3px">IGNITION TREND (last 8 wks)</div>';
+      cards += '<div class="mini-chart">';
+      vals.forEach(function(v,vi){
+        var h = Math.round((v/maxV)*36);
+        var col = v===0?'#1a1a25':vi===vals.length-1?'#f0d214':'#2a2a40';
+        cards += '<div class="mini-bar" style="height:'+Math.max(h,2)+'px;background:'+col+'"></div>';
+      });
+      cards += '</div></div>';
+    }
+
+    cards += '</div>';
+  });
+
+  document.getElementById('tab-ops').innerHTML =
+    '<div class="controls">'+
+    sbtns+
+    '<input type="text" placeholder="Search operator..." value="'+esc(opSearch)+'" oninput="setSearch(this.value)" style="background:#0f1018;border:1px solid #e0e0e0;color:#555;border-radius:6px;padding:4px 10px;font-size:10px;outline:none;margin-left:auto">'+
+    '</div>'+
+    '<div class="op-grid">'+
+    (cards||'<div class="empty">No operators found</div>')+
+    '</div>';
+}
+
+// ── SHIFT COMPARISON ──────────────────────────────────────────────────────────
+function renderCmp() {
+  var shiftsPresent = SHIFTS.filter(function(s){ return activeOps().some(function(o){return effShift(o)===s;}); });
+
+  var h = '<div class="sec-hdr">SHIFT vs SHIFT — ALL METRICS (DAILY AVERAGES)</div>';
+  h += '<div class="cmp-wrap"><table class="cmp-table"><thead><tr>';
+  h += '<th style="text-align:left">METRIC</th>';
+  shiftsPresent.forEach(function(s){
+    var c=SC[s]||{bg:'#444',tx:'#fff'};
+    h += '<th><span class="pill" style="background:'+c.bg+';color:'+c.tx+'">'+esc(s)+'</span></th>';
+  });
+  h += '</tr></thead><tbody>';
+
+  METRICS.forEach(function(m,mi){
+    h += '<tr style="background:'+(mi%2===0?'#fafafa':'transparent')+'">';
+    h += '<td style="color:#555;font-weight:600">'+m.label+'</td>';
+
+    var shiftAvgs = shiftsPresent.map(function(s){
+      var recs=[];
+      activeOps().filter(function(op){return effShift(op)===s;}).forEach(function(op){
+        opRecords(op,'all').forEach(function(r){recs.push(r);});
+      });
+      var active=recs.filter(function(r){return r[m.key]>0;});
+      return active.length?active.reduce(function(s2,r){return s2+r[m.key];},0)/active.length:0;
+    });
+
+    var best = m.higherBetter===null ? -1 : m.higherBetter ? Math.max.apply(null,shiftAvgs) : Math.min.apply(null,shiftAvgs.filter(function(v){return v>0;}));
+
+    shiftAvgs.forEach(function(avg,si){
+      var isBest = m.higherBetter!==null && avg>0 && avg===best;
+      h += '<td style="color:'+(avg===0?'#2a2a3a':m.color)+';font-weight:'+(isBest?'700':'400')+'">';
+      h += avg===0?'—':fmt(avg,m.unit);
+      if (isBest) h += ' <span style="font-size:9px;color:#34d399">&#9733;</span>';
+      h += '</td>';
+    });
+    h += '</tr>';
+  });
+
+  h += '</tbody></table></div>';
+  h += '<div style="font-size:10px;color:#444;margin-top:8px"><span style="color:#34d399">&#9733;</span> = best performing shift for that metric</div>';
+
+  document.getElementById('tab-cmp').innerHTML = h;
+}
+
+// ── SPOTLIGHT ─────────────────────────────────────────────────────────────────
+function renderSpot() {
+  var ops = activeOps().filter(function(op){ return opRecords(op,'all').length>0; });
+  var improved = ops.filter(mostImproved).slice(0,6);
+  var support  = ops.filter(needsSupport).slice(0,6);
+
+  var h = '';
+
+  // Most Improved
+  h += '<div class="sec-hdr">&#127775; MOST IMPROVED</div>';
+  if (!improved.length) {
+    h += '<div style="color:#bbb;font-size:11px;margin-bottom:20px;padding:16px;background:#fafafa;border-radius:8px">Not enough data to identify trends yet. Upload data covering at least 2 weeks or months.</div>';
+  } else {
+    h += '<p style="font-size:11px;color:#555;margin-bottom:14px">These operators have shown meaningful positive improvement in their ignition or idle metrics compared to the previous period. A great opportunity to recognise the effort.</p>';
+    h += '<div class="spotlight-grid">';
+    improved.forEach(function(op){
+      var recs=opRecords(op,'all');
+      var ignTrend=getTrend(op,'ign'), idleTrend=getTrend(op,'idle');
+      h += '<div class="spotlight-card spotlight-improve">';
+      h += '<div class="spotlight-title" style="color:#34d399">IMPROVED PERFORMANCE</div>';
+      h += '<div class="spotlight-name">'+esc(op.name)+'</div>';
+      h += '<div style="margin:4px 0">'+pill(effShift(op))+'</div>';
+      h += '<div class="spotlight-detail">';
+      if (ignTrend>10)  h += 'Ignition up <strong style="color:#34d399">+'+Math.round(ignTrend)+'%</strong> vs previous period<br>';
+      if (idleTrend<-10) h += 'Idle down <strong style="color:#34d399">'+Math.round(idleTrend)+'%</strong> vs previous period<br>';
+      h += recs.length+' days of data</div>';
+      h += '</div>';
+    });
+    h += '</div>';
+  }
+
+  // Needs Support
+  h += '<div class="sec-hdr" style="margin-top:8px">&#128276; NEEDS SUPPORT</div>';
+  if (!support.length) {
+    h += '<div style="color:#bbb;font-size:11px;padding:16px;background:#fafafa;border-radius:8px">No operators currently flagged. Either not enough data to detect trends, or everyone is performing consistently.</div>';
+  } else {
+    h += '<p style="font-size:11px;color:#555;margin-bottom:14px">These operators are showing a downward trend in key metrics. This is intended as an early signal to offer support, not a judgement. A quiet word and some coaching now is far more effective than waiting for the numbers to get worse.</p>';
+    h += '<div class="spotlight-grid">';
+    support.forEach(function(op){
+      var recs=opRecords(op,'all');
+      var ignTrend=getTrend(op,'ign'), idleTrend=getTrend(op,'idle');
+      h += '<div class="spotlight-card spotlight-support">';
+      h += '<div class="spotlight-title" style="color:#f59e0b">MAY BENEFIT FROM SUPPORT</div>';
+      h += '<div class="spotlight-name">'+esc(op.name)+'</div>';
+      h += '<div style="margin:4px 0">'+pill(effShift(op))+'</div>';
+      h += '<div class="spotlight-detail">';
+      if (ignTrend<-15) h += 'Ignition down <strong style="color:#f59e0b">'+Math.round(ignTrend)+'%</strong> vs previous period<br>';
+      if (idleTrend>15)  h += 'Idle up <strong style="color:#f59e0b">+'+Math.round(idleTrend)+'%</strong> vs previous period<br>';
+      h += recs.length+' days of data</div>';
+      h += '</div>';
+    });
+    h += '</div>';
+  }
+
+  document.getElementById('tab-spot').innerHTML = h;
+}
+
+// ── AREA ASSIGNMENTS ──────────────────────────────────────────────────────────
+var AREAS_LIST = ['Dry Goods','Line Support','MAG1 Loading','Tent Loading','Dept Avg'];
+function aselOpts(cur){ return AREAS_LIST.map(function(a){ return '<option'+(a===cur?' selected':'')+'>'+esc(a)+'</option>'; }).join(''); }
+
+function renderAreas() {
+  var allOps=activeOps().sort(function(a,b){return a.name.localeCompare(b.name);});
+  var sp=SHIFTS.filter(function(s){return allOps.some(function(o){return effShift(o)===s;});});
+  if (!arShift||sp.indexOf(arShift)===-1) arShift=sp[0]||'';
+  var hasRemoved=Object.values(opMap).some(function(op){return isRemoved(op.name);});
+
+  var tabs=sp.map(function(s){
+    var c=SC[s]||{bg:'#444',tx:'#fff'}, on=s===arShift;
+    return '<button onclick="setArShift(\''+esc(s)+'\')" style="padding:9px 16px;border:none;border-bottom:3px solid '+(on?c.bg:'transparent')+';background:'+(on?'rgba(255,255,255,0.04)':'transparent')+';color:'+(on?c.bg:'#555')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s">'+esc(s)+'</button>';
+  }).join('');
+  var removedTab=hasRemoved?'<button onclick="setArShift(\'__removed__\')" style="padding:9px 16px;border:none;border-bottom:3px solid '+(arShift==='__removed__'?'#f87171':'transparent')+';background:transparent;color:'+(arShift==='__removed__'?'#f87171':'#555')+';font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">&#128465; Removed</button>':'';
+
+  var cards='';
+  if (arShift==='__removed__') {
+    Object.values(opMap).filter(function(op){return isRemoved(op.name);}).forEach(function(op){
+      cards+='<div class="arcard" style="background:#ffffff;border:1px solid rgba(248,113,113,.2);border-radius:7px;padding:8px 11px;display:flex;align-items:center;gap:8px">';
+      cards+='<div style="flex:1"><div style="font-size:12px;font-weight:600;color:#666;text-decoration:line-through">'+esc(op.name)+'</div><span style="font-size:9px;color:#f87171">Removed</span></div>';
+      cards+='<button onclick="restoreOp(\''+esc(op.name)+'\')" style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);color:#34d399;border-radius:5px;padding:5px 10px;font-size:10px">&#8617; Restore</button>';
+      cards+='</div>';
+    });
+  } else {
+    var ops=allOps.filter(function(op){return effShift(op)===arShift;});
+    ops.forEach(function(op){
+      var isOv=shiftOverrides[op.name]&&shiftOverrides[op.name]!=='__removed__';
+      cards+='<div style="display:flex;align-items:center;gap:8px;background:#ffffff;border-radius:7px;padding:8px 11px;border:1px solid '+(isOv?'rgba(245,158,11,.3)':'rgba(255,255,255,.06)')+'">';
+      cards+='<div style="flex:1"><div style="font-size:12px;font-weight:600;color:#222;margin-bottom:2px">'+esc(op.name)+'</div>';
+      if(isOv) cards+='<span style="font-size:9px;color:#f59e0b">Moved from '+esc(op.shift)+'</span>';
+      cards+='</div>';
+      cards+='<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">';
+      cards+='<select class="csel" onchange="setArea(\''+esc(op.name)+'\',this.value)" style="font-size:10px">'+aselOpts(areaMap[op.name]||'Dept Avg')+'</select>';
+      cards+='<div style="display:flex;gap:4px">';
+      cards+='<select onchange="moveOp(\''+esc(op.name)+'\',this.value);this.value=\'\'" style="background:#0f1018;border:1px solid #e0e0e0;color:#666;border-radius:4px;padding:2px 4px;font-size:9px;outline:none"><option value="">Move to...</option>';
+      SHIFTS.filter(function(s){return s!==arShift;}).forEach(function(s){cards+='<option value="'+esc(s)+'">'+esc(s)+'</option>';});
+      cards+='</select>';
+      cards+='<button onclick="removeOp(\''+esc(op.name)+'\')" style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:#f87171;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer">&#10005;</button>';
+      cards+='</div></div></div>';
+    });
+  }
+
+  document.getElementById('tab-areas').innerHTML=
+    '<div style="display:flex;border-bottom:1px solid #e5e5e5;margin-bottom:14px;flex-wrap:wrap">'+tabs+removedTab+'</div>'+
+    (arShift!=='__removed__'?'<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:9px 13px;background:#ffffff;border-radius:8px;border:1px solid #ebebeb"><span style="font-size:11px;color:#555">Bulk assign all <strong style="color:#333">'+esc(arShift)+'</strong> to:</span><select class="csel" onchange="bulkArea(\''+esc(arShift)+'\',this.value)">'+aselOpts('Dept Avg')+'</select></div>':'')+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:7px">'+(cards||'<div class="empty">No operators</div>')+'</div>';
+}
+
+// ── EVENT HANDLERS ────────────────────────────────────────────────────────────
+function setShift(s){shiftF=s;render();}
+function setSearch(v){opSearch=v;renderOps();}
+function setArea(name,val){areaMap[name]=val;}
+function bulkArea(shift,val){Object.values(opMap).forEach(function(op){if(effShift(op)===shift)areaMap[op.name]=val;});}
+function moveOp(name,toShift){if(toShift){shiftOverrides[name]=toShift;renderAreas();render();}}
+function removeOp(name){shiftOverrides[name]='__removed__';renderAreas();render();}
+function restoreOp(name){delete shiftOverrides[name];renderAreas();render();}
+function setArShift(s){arShift=s;renderAreas();}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    activeTab=btn.dataset.tab;
+    document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+    btn.classList.add('on');
+    ['dash','ops','cmp','spot','areas'].forEach(function(t){
+      document.getElementById('tab-'+t).style.display=t===activeTab?'block':'none';
+    });
+    if (Object.keys(opMap).length) render();
+  });
+});
+
+// ── UPLOAD ────────────────────────────────────────────────────────────────────
+// ── UPLOAD ────────────────────────────────────────────────────────────────────
+(function() {
+  var dz = document.getElementById('dz');
+  var fi = document.getElementById('fi');
+
+  fi.addEventListener('change', function() {
+    if (fi.files && fi.files[0]) handleFile(fi.files[0]);
+  });
+
+  dz.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dz.classList.add('drag');
+  });
+  dz.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    dz.classList.remove('drag');
+  });
+  dz.addEventListener('drop', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dz.classList.remove('drag');
+    var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+})();
+</script>
+</body>
+</html>

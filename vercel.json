@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "routes": [
+    { "src": "/", "dest": "/index.html" },
+    { "src": "/incentive", "dest": "/SmartLiftLeaderboard.html" },
+    { "src": "/tracker", "dest": "/ShiftTracker.html" }
+  ]
+}

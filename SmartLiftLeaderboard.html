@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ABInBev SmartLift Incentive Tracker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Barlow:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f5f5f5;color:#0f0f0f;font-family:"Barlow",sans-serif;min-height:100vh;font-size:13px}
+button,select,input{font-family:inherit;cursor:pointer}
+::-webkit-scrollbar{width:5px;background:#f0f0f0}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+.hdr{background:#0f0f0f;border-bottom:3px solid #f0d214;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+.hdr-left{display:flex;align-items:center;gap:16px}
+.logo{height:36px;filter:brightness(0) invert(1)}
+.hdr-divider{width:1px;height:36px;background:rgba(255,255,255,0.15)}
+.hdr-title{font-family:"Barlow Condensed",sans-serif;font-size:22px;font-weight:900;letter-spacing:2px;color:#f0d214;line-height:1}
+.hdr-sub{font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1px;margin-top:2px}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.sync-badge{font-size:10px;padding:3px 10px;border-radius:20px;font-weight:600}
+.sync-ok{background:rgba(46,213,115,0.15);border:1px solid rgba(46,213,115,0.3);color:#2ed573}
+.sync-err{background:rgba(255,71,87,0.15);border:1px solid rgba(255,71,87,0.3);color:#ff4757}
+.sync-loading{background:rgba(240,210,20,0.15);border:1px solid rgba(240,210,20,0.3);color:#e6be28}
+.tabs{display:flex;background:#fff;border-bottom:1px solid #e5e5e5;padding:0 24px;overflow-x:auto}
+.tab{padding:11px 16px;background:transparent;border:none;border-bottom:2px solid transparent;color:#888;font-size:11px;font-weight:700;letter-spacing:.5px;white-space:nowrap;transition:all .15s}
+.tab.on{color:#0f0f0f;border-bottom-color:#f0d214}
+.wrap{padding:18px 24px;max-width:1240px}
+/* BENCH STRIP */
+.benchstrip{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;padding:10px 14px;background:rgba(240,210,20,0.07);border:1px solid rgba(240,210,20,0.25);border-radius:8px;margin-bottom:11px}
+.bencharea{font-size:9px;color:#888;margin-bottom:2px;letter-spacing:.5px;text-transform:uppercase}
+.benchtgt{font-size:11px;font-weight:700;color:#2ed573}
+.benchbase{font-size:9px;color:#bbb}
+.infostrip{display:flex;gap:16px;flex-wrap:wrap;padding:8px 14px;background:#fff;border:1px solid #e5e5e5;border-radius:7px;margin-bottom:13px;font-size:10px}
+/* UPLOAD */
+.upload-section{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:13px}
+.dropzone{position:relative;border:2px dashed #d5d5d5;border-radius:9px;padding:18px;text-align:center;background:#fff;transition:all .2s}
+.dropzone:hover,.dropzone.drag{border-color:#f0d214;background:rgba(240,210,20,0.04)}
+.dz-icon{font-size:24px;margin-bottom:4px;pointer-events:none}
+.dz-label{color:#666;font-size:11px;pointer-events:none}
+.dz-sub{color:#bbb;font-size:10px;margin-top:2px;pointer-events:none}
+.errmsg{color:#ff4757;font-size:11px;padding:8px 12px;background:rgba(255,71,87,.06);border-radius:6px;margin-bottom:12px;display:none;border:1px solid rgba(255,71,87,.2)}
+/* STATS */
+.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:16px;display:none}
+.statcard{background:#fff;border:1px solid #e5e5e5;border-radius:9px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
+.statlbl{font-size:9px;color:#999;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.statval{font-size:22px;font-weight:800}
+.statsub{font-size:10px;color:#bbb;margin-top:2px}
+/* CONTROLS */
+.controls{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.fbtn{padding:4px 12px;border-radius:20px;border:1px solid #e0e0e0;background:#fff;color:#666;font-size:10px;font-weight:600;transition:all .15s}
+.fbtn.on{border-color:#f0d214;background:rgba(240,210,20,0.1);color:#0f0f0f}
+.sbtn{padding:3px 9px;border-radius:4px;border:1px solid #e0e0e0;background:#fff;color:#666;font-size:10px;font-weight:600;transition:all .15s}
+.sbtn.on{border-color:#f0d214;background:rgba(240,210,20,0.1);color:#0f0f0f}
+.psel{background:#fff;border:1px solid #e0e0e0;color:#555;border-radius:5px;padding:4px 9px;font-size:10px;outline:none}
+/* LEADERBOARD */
+.colhdrs{display:grid;grid-template-columns:34px 1fr 58px 44px 148px 148px 62px;gap:8px;padding:5px 14px;font-size:9px;color:#bbb;letter-spacing:1px;text-transform:uppercase}
+.lbrows{display:flex;flex-direction:column;gap:3px}
+.lbrow{display:grid;grid-template-columns:34px 1fr 58px 44px 148px 148px 62px;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;border-left:3px solid transparent;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.lbrow.s2{border-left-color:#2ed573}.lbrow.s1{border-left-color:#ffa502}
+.lbrow.r1{background:rgba(240,210,20,0.12)}.lbrow.r2{background:rgba(240,210,20,0.07)}.lbrow.r3{background:rgba(240,210,20,0.04)}
+.opname{font-weight:700;font-size:13px;color:#111;margin-bottom:3px}
+.opmeta{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.pill{border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700;white-space:nowrap}
+.areatag{font-size:9px;color:#888;border-bottom:1px dashed #ccc;cursor:pointer}
+.areasel{background:#fff;border:1px solid #d0d0d0;color:#333;border-radius:4px;padding:2px 5px;font-size:10px;outline:none;display:none}
+.dlbl{font-size:9px;color:#bbb;text-align:center;margin-bottom:1px}
+.dval{font-size:14px;font-weight:700;color:#555;text-align:center}
+.sccircle{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;font-size:13px;font-weight:900}
+.mrow{display:flex;justify-content:space-between;margin-bottom:3px}
+.mlbl{font-size:9px;color:#999}.mval{font-size:11px;font-weight:700}
+.barwrap{display:flex;align-items:center;gap:5px}
+.barbg{flex:1;height:5px;background:#f0f0f0;border-radius:3px;overflow:hidden}
+.barfill{height:100%;border-radius:3px}
+.barpct{font-size:9px;color:#bbb;min-width:26px;text-align:right}
+.mtgt{font-size:9px;color:#ccc;margin-top:2px}
+.totlbl{font-size:9px;color:#bbb;text-align:center;margin-bottom:1px}
+.totval{font-size:10px;font-weight:600;color:#666;text-align:center}
+.empty{color:#ccc;text-align:center;padding:40px;font-size:12px}
+/* LE TABLE */
+.lectrls{display:flex;gap:7px;margin-bottom:13px;align-items:center}
+.letwrap{overflow-x:auto}
+.letable{border-collapse:collapse;font-size:11px;width:100%}
+.letable th{padding:7px 8px;color:#999;border-bottom:1px solid #e5e5e5;font-weight:700;white-space:pre-line;line-height:1.3;text-align:center;background:#fff}
+.letable td{padding:5px 6px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+.lecell{border-radius:5px;padding:4px 5px;text-align:center;min-width:82px}
+.lesc{font-weight:800;font-size:11px}.led{font-size:9px;color:#999}.lei{font-size:9px}
+/* AREA ASSIGNMENTS */
+.arcard{display:flex;align-items:center;gap:8px;background:#fff;border-radius:7px;padding:8px 12px;border:1px solid #e5e5e5;box-shadow:0 1px 3px rgba(0,0,0,0.03)}
+.arname{font-size:12px;font-weight:600;color:#222;margin-bottom:3px}
+.arsel{background:#fff;border:1px solid #d0d0d0;color:#333;border-radius:4px;padding:4px 7px;font-size:11px;outline:none}
+/* LEGEND */
+.legend{margin-top:16px;display:none;gap:14px;font-size:9px;color:#bbb;flex-wrap:wrap;border-top:1px solid #eeeeee;padding-top:12px}
+/* LOADING OVERLAY */
+.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;display:none}
+.loading-spinner{width:40px;height:40px;border:3px solid #e5e5e5;border-top-color:#f0d214;border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:13px;color:#666;font-weight:600}
+/* DATA MGMT */
+.data-panel{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:16px 18px;margin-bottom:16px}
+.data-panel-title{font-size:11px;font-weight:700;color:#666;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #f0f0f0}
+.danger-btn{padding:6px 14px;border-radius:6px;border:1px solid rgba(255,71,87,0.3);background:rgba(255,71,87,0.06);color:#ff4757;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.danger-btn:hover{background:rgba(255,71,87,0.12)}
+.success-msg{color:#2ed573;font-size:11px;margin-top:8px;display:none}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">Loading...</div>
+</div>
+
+<div class="hdr">
+  <div class="hdr-left">
+    <img class="logo" src="data:image/png;base64,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" alt="ABInBev"/>
+    <div class="hdr-divider"></div>
+    <div>
+      <div class="hdr-title">SMARTLIFT INCENTIVE TRACKER</div>
+      <div class="hdr-sub" id="hdr-sub">3-MONTH SCHEME · JUNE – AUG 2026</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <span class="sync-badge sync-loading" id="sync-badge">⟳ Connecting...</span>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab on" data-tab="lb">🏅 Leaderboard</button>
+  <button class="tab" data-tab="le">📅 Week / Month LE</button>
+  <button class="tab" data-tab="ar">🗂 Area Assignments</button>
+  <button class="tab" data-tab="snap">📸 Snapshot</button>
+  <button class="tab" data-tab="data">🗄 Data</button>
+  <button class="tab" data-tab="help">❓ Help</button>
+</div>
+
+<div class="wrap">
+  <div class="benchstrip" id="benchstrip"></div>
+  <div class="infostrip">
+    <span><span style="color:#999">💤 IDLE TARGET </span><span style="font-weight:700;color:#2ed573">≤ 1h 15m</span><span style="color:#ccc;margin-left:5px">(bench 1h 40m)</span></span>
+    <span><span style="color:#999">🚫 ABSENCE </span><span style="font-weight:700;color:#f59e0b">Zero tolerance — tracked separately</span></span>
+  </div>
+
+  <!-- UPLOAD - shown on lb tab only -->
+  <div id="upload-section">
+    <div class="dropzone" id="dz">
+      <input type="file" id="fi" accept=".xlsx,.xls" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2"/>
+      <div class="dz-icon" id="dz-icon">📊</div>
+      <div class="dz-label" id="dz-lbl">Drop SmartLift Excel export here, or click to browse</div>
+      <div class="dz-sub">.xlsx or .xls — data is saved to database automatically</div>
+    </div>
+  </div>
+  <div class="errmsg" id="errmsg"></div>
+  <div class="statgrid" id="statgrid"></div>
+
+  <div id="tab-lb"></div>
+  <div id="tab-le" style="display:none"></div>
+  <div id="tab-ar" style="display:none"></div>
+  <div id="tab-snap" style="display:none"></div>
+  <div id="tab-data" style="display:none"></div>
+  <div id="tab-help" style="display:none"></div>
+
+  <div class="legend" id="legend">
+    <span>🟢 Both targets met</span><span>🟡 One target met</span><span>🔴 Neither met</span>
+    <span style="margin-left:auto">Averages across working days only · Data saved to Supabase</span>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const SUPA_URL =  + SUPA_URL + ;
+const SUPA_KEY =  + SUPA_KEY + ;
+const AREAS = {"Dry Goods":{b:7+29/60,t:8+14/60},"Line Support":{b:7+44/60,t:8+30/60},"MAG1 Loading":{b:9+12/60,t:9+45/60},"Tent Loading":{b:8+23/60,t:9+45/60},"Dept Avg":{b:8+28/60,t:9+19/60}};
+const IT = 1.25;
+const SC = {"A Shift":{bg:"#ff6b35",tx:"#fff"},"B shift":{bg:"#4ecdc4",tx:"#fff"},"C Shift":{bg:"#45b7d1",tx:"#fff"},"D Shift":{bg:"#96ceb4",tx:"#1a1a1a"},"Days Team":{bg:"#ffeaa7",tx:"#1a1a1a"},"Agency":{bg:"#dfe6e9",tx:"#1a1a1a"},"Engineering":{bg:"#e6be28",tx:"#fff"}};
+const SHIFTS = ["A Shift","B shift","C Shift","D Shift","Days Team","Agency","Engineering"];
+const MN = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let opMap = {}, areaMap = {}, shiftOverrides = {};
+let shiftF = "All", sortBy = "score", period = "all", leView = "week";
+let activeTab = "lb", arShift = "";
+let snapPrev = {rows:[],label:"",loaded:false}, snapCurr = {rows:[],label:"",loaded:false};
+
+// ── SUPABASE API ───────────────────────────────────────────────────────────────
+async function supa(method, table, body, params) {
+  const url = new URL(`${SUPA_URL}/rest/v1/${table}`);
+  if (params) Object.entries(params).forEach(([k,v]) => url.searchParams.set(k,v));
+  const res = await fetch(url, {
+    method,
+    headers: {
+      "apikey": SUPA_KEY,
+      "Authorization": `Bearer ${SUPA_KEY}`,
+      "Content-Type": "application/json",
+      "Prefer": method === "POST" ? "return=minimal" : undefined,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Supabase ${method} ${table}: ${err}`);
+  }
+  if (method === "GET") return res.json();
+  return true;
+}
+
+// ── LOAD FROM SUPABASE ────────────────────────────────────────────────────────
+async function loadFromSupabase() {
+  setSyncBadge("loading", "⟳ Loading...");
+  try {
+    // Load records in pages of 1000
+    let allRecords = [], offset = 0, pageSize = 1000;
+    while (true) {
+      const page = await supa("GET", "smartlift_records", null, {
+        select: "*",
+        order: "work_date.asc",
+        offset,
+        limit: pageSize,
+      });
+      allRecords = allRecords.concat(page);
+      if (page.length < pageSize) break;
+      offset += pageSize;
+    }
+
+    // Load area assignments
+    const areas = await supa("GET", "area_assignments", null, {select: "*"});
+    areaMap = {};
+    areas.forEach(a => { areaMap[a.operator_name] = a.area; });
+
+    // Load shift overrides
+    const overrides = await supa("GET", "shift_overrides", null, {select: "*"});
+    shiftOverrides = {};
+    overrides.forEach(o => { shiftOverrides[o.operator_name] = o.override_shift; });
+
+    // Build opMap from records
+    opMap = {};
+    allRecords.forEach(r => {
+      const name = r.operator_name;
+      if (!opMap[name]) opMap[name] = {name, shift: r.shift, id: r.operator_id, records: []};
+      opMap[name].records.push({
+        ign: r.hours_ignition || 0,
+        idle: r.hours_idling || 0,
+        mot: r.hours_motion || 0,
+        load: r.hours_load || 0,
+        ignEv: r.ignition_events || 0,
+        idleEv: r.idling_events || 0,
+        motEv: r.motion_events || 0,
+        loadEv: r.load_events || 0,
+        wwl: r.work_without_load || 0,
+        dur: r.work_day_duration || 0,
+        ds: r.work_date || "",
+      });
+      if (!areaMap[name]) areaMap[name] = "Dept Avg";
+    });
+
+    const opCount = Object.keys(opMap).length;
+    setSyncBadge("ok", `✓ ${allRecords.length} records · ${opCount} operators`);
+    if (opCount > 0) { render(); document.getElementById("hdr-sub").textContent = `3-MONTH SCHEME · JUNE – AUG 2026 · ${opCount} operators · ${allRecords.length} records`; }
+    else setSyncBadge("ok", "✓ Connected — upload data to get started");
+  } catch(e) {
+    setSyncBadge("err", "✗ Connection error");
+    console.error(e);
+  }
+}
+
+// ── SAVE TO SUPABASE ──────────────────────────────────────────────────────────
+async function saveRecordsToSupabase(rows) {
+  // Build batch insert — deduplicate by operator+date
+  const records = rows.map(row => ({
+    operator_name: String(row["Operator"] || "").trim(),
+    operator_id: String(row["Operator ID"] || ""),
+    shift: String(row["Group"] || "").trim(),
+    work_date: String(row["Work day Start Date"] || "").substring(0,10) || null,
+    hours_ignition: parseFloat(row["Hours in Ignition"]) || 0,
+    ignition_events: parseFloat(row["Ignition Events"]) || 0,
+    hours_motion: parseFloat(row["Hours in Motion"]) || 0,
+    motion_events: parseFloat(row["Motion events"]) || 0,
+    hours_load: parseFloat(row["Load lifting hours"]) || 0,
+    load_events: parseFloat(row["Load Events"]) || 0,
+    hours_idling: parseFloat(row["Hours Idling"]) || 0,
+    idling_events: parseFloat(row["Idling Events"]) || 0,
+    work_without_load: parseFloat(row["Work without load"]) || 0,
+    work_day_duration: parseFloat(row["Duration of Work Day"]) || 0,
+  })).filter(r => r.operator_name);
+
+  // Insert in batches of 200
+  const batchSize = 200;
+  for (let i = 0; i < records.length; i += batchSize) {
+    const batch = records.slice(i, i + batchSize);
+    await supa("POST", "smartlift_records", batch);
+  }
+  return records.length;
+}
+
+async function saveAreaAssignment(name, area) {
+  await fetch(`${SUPA_URL}/rest/v1/area_assignments`, {
+    method: "POST",
+    headers: {
+      "apikey": SUPA_KEY,
+      "Authorization": `Bearer ${SUPA_KEY}`,
+      "Content-Type": "application/json",
+      "Prefer": "resolution=merge-duplicates",
+    },
+    body: JSON.stringify({operator_name: name, area, updated_at: new Date().toISOString()}),
+  });
+}
+
+async function saveShiftOverride(name, shift) {
+  if (shift === null) {
+    await supa("DELETE", "shift_overrides", null, {"operator_name": `eq.${name}`});
+  } else {
+    await fetch(`${SUPA_URL}/rest/v1/shift_overrides`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPA_KEY,
+        "Authorization": `Bearer ${SUPA_KEY}`,
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates",
+      },
+      body: JSON.stringify({operator_name: name, override_shift: shift, updated_at: new Date().toISOString()}),
+    });
+  }
+}
+
+async function clearAllRecords() {
+  await supa("DELETE", "smartlift_records", null, {"id": "neq.00000000-0000-0000-0000-000000000000"});
+}
+
+function setSyncBadge(state, text) {
+  const el = document.getElementById("sync-badge");
+  el.textContent = text;
+  el.className = `sync-badge sync-${state}`;
+}
+
+function showLoading(text) {
+  document.getElementById("loading-text").textContent = text || "Loading...";
+  document.getElementById("loading-overlay").style.display = "flex";
+}
+function hideLoading() { document.getElementById("loading-overlay").style.display = "none"; }
+
+// ── XLSX PARSER ───────────────────────────────────────────────────────────────
+async function readXLSX(file) {
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  const files = {};
+  let i = 0;
+  while (i < bytes.length - 4) {
+    if (bytes[i]===0x50&&bytes[i+1]===0x4B&&bytes[i+2]===0x03&&bytes[i+3]===0x04) {
+      const comp = bytes[i+8]|(bytes[i+9]<<8);
+      const csize = bytes[i+18]|(bytes[i+19]<<8)|(bytes[i+20]<<16)|(bytes[i+21]<<24);
+      const fnlen = bytes[i+26]|(bytes[i+27]<<8);
+      const exlen = bytes[i+28]|(bytes[i+29]<<8);
+      const fname = new TextDecoder().decode(bytes.slice(i+30,i+30+fnlen));
+      const dataStart = i+30+fnlen+exlen;
+      const compData = bytes.slice(dataStart, dataStart+csize);
+      if (fname.endsWith(".xml")||fname.endsWith(".rels")) {
+        let text = "";
+        if (comp===0) { text = new TextDecoder().decode(compData); }
+        else if (comp===8) {
+          try {
+            const ds = new DecompressionStream("deflate-raw");
+            const w = ds.writable.getWriter(); const r = ds.readable.getReader();
+            w.write(compData); w.close();
+            const chunks = [];
+            while (true) { const {done,value} = await r.read(); if(done)break; chunks.push(value); }
+            const total = new Uint8Array(chunks.reduce((s,c)=>s+c.length,0));
+            let off = 0; chunks.forEach(c=>{total.set(c,off);off+=c.length;});
+            text = new TextDecoder().decode(total);
+          } catch(e) {}
+        }
+        if (text) files[fname] = text;
+      }
+      i = dataStart + csize;
+    } else { i++; }
+  }
+  const ssXml = files["xl/sharedStrings.xml"] || "";
+  const shared = parseSharedStrings(ssXml);
+  const wsKey = Object.keys(files).find(k => /xl\/worksheets\/sheet\d/.test(k)) || "";
+  const wsXml = files[wsKey] || "";
+  if (!wsXml) throw new Error("Could not find worksheet.");
+  return parseSheet(wsXml, shared);
+}
+
+function parseSharedStrings(xml) {
+  if (!xml) return [];
+  const strings = [], siRe = /<si>([\s\S]*?)<\/si>/g, tRe = /<t(?:\s[^>]*)?>([^<]*)<\/t>/g;
+  let si;
+  while ((si=siRe.exec(xml))!==null) {
+    let block=si[1], text="", t; tRe.lastIndex=0;
+    while ((t=tRe.exec(block))!==null) text+=decodeXML(t[1]);
+    strings.push(text);
+  }
+  return strings;
+}
+function decodeXML(s){ return s.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;/g,"'"); }
+function colLetterToIndex(l){ let n=0; for(let i=0;i<l.length;i++) n=n*26+(l.charCodeAt(i)-64); return n-1; }
+
+function parseSheet(xml, shared) {
+  const rows=[], rowRe=/<row\b[^>]*>([\s\S]*?)<\/row>/g, cellRe=/<c\b([^>]*)>([\s\S]*?)<\/c>/g, vRe=/<v[^>]*>([^<]*)<\/v>/;
+  let rowMatch;
+  while ((rowMatch=rowRe.exec(xml))!==null) {
+    const cells={}, cellMatch; let cm; cellRe.lastIndex=0;
+    while ((cm=cellRe.exec(rowMatch[1]))!==null) {
+      const attrs=cm[1], content=cm[2];
+      const refM=attrs.match(/\br="([^"]+)"/); if(!refM)continue;
+      const letters=refM[1].replace(/[0-9]/g,""), idx=colLetterToIndex(letters);
+      const typeM=attrs.match(/\bt="([^"]+)"/), t=typeM?typeM[1]:"";
+      const vM=vRe.exec(content);
+      let val="";
+      if(t==="s"){val=vM?(shared[parseInt(vM[1])]||""):""}
+      else if(t==="inlineStr"){const tM=/<t[^>]*>([^<]*)<\/t>/.exec(content);val=tM?decodeXML(tM[1]):""}
+      else{val=vM?(isNaN(parseFloat(vM[1]))?vM[1]:parseFloat(vM[1])):""}
+      cells[idx]=val;
+    }
+    rows.push(cells);
+  }
+  if(!rows.length)return[];
+  let headerRowIdx=0;
+  for(let i=0;i<Math.min(rows.length,10);i++){
+    if(Object.values(rows[i]).map(v=>String(v).trim()).includes("Operator")){headerRowIdx=i;break;}
+  }
+  const headerMap=rows[headerRowIdx], result=[];
+  for(let j=headerRowIdx+1;j<rows.length;j++){
+    const cellMap=rows[j]; if(!Object.keys(cellMap).length)continue;
+    const obj={}; for(const idx in headerMap) obj[headerMap[idx]]=cellMap[idx]!==undefined?cellMap[idx]:"";
+    result.push(obj);
+  }
+  return result;
+}
+
+// ── FILE HANDLER ──────────────────────────────────────────────────────────────
+async function handleFile(file) {
+  if (!file) return;
+  document.getElementById("dz-icon").textContent = "⏳";
+  document.getElementById("dz-lbl").textContent = "Reading " + file.name + "...";
+  document.getElementById("errmsg").style.display = "none";
+  showLoading("Parsing " + file.name + "...");
+  try {
+    const rows = await readXLSX(file);
+    if (!rows.length) throw new Error("No data rows found.");
+    const keys = Object.keys(rows[0]);
+    if (!keys.includes("Operator")) throw new Error("Operator column not found. Columns: " + keys.join(", "));
+
+    showLoading("Saving to database...");
+    setSyncBadge("loading", "⟳ Saving...");
+    const saved = await saveRecordsToSupabase(rows);
+    setSyncBadge("loading", "⟳ Reloading...");
+
+    showLoading("Loading updated data...");
+    await loadFromSupabase();
+
+    document.getElementById("dz-icon").textContent = "✅";
+    document.getElementById("dz-lbl").textContent = `Saved ${saved} records — drop another file to add more data`;
+    hideLoading();
+  } catch(e) {
+    document.getElementById("dz-icon").textContent = "❌";
+    document.getElementById("dz-lbl").textContent = "Error — see below";
+    const el = document.getElementById("errmsg"); el.textContent = e.message; el.style.display = "block";
+    setSyncBadge("err", "✗ Error");
+    hideLoading();
+  }
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const fmt = h => { if(!h||isNaN(h)||h<0)return"0h 00m"; return Math.floor(h)+"h "+String(Math.round((h%1)*60)).padStart(2,"0")+"m"; };
+const wk = ds => { const d=new Date(ds); if(isNaN(d))return null; const t=new Date(d); t.setDate(d.getDate()-((d.getDay()+6)%7)+3); const j=new Date(t.getFullYear(),0,4); return t.getFullYear()+"-W"+String(Math.ceil(((t-j)/864e5+1)/7)).padStart(2,"0"); };
+const mo = ds => { const d=new Date(ds); return isNaN(d)?null:d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); };
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const pill = s => { const c=SC[s]||{bg:"#999",tx:"#fff"}; return `<span class="pill" style="background:${c.bg};color:${c.tx}">${esc(s||"—")}</span>`; };
+const aselOpts = cur => Object.keys(AREAS).map(a=>`<option${a===cur?" selected":""}>${esc(a)}</option>`).join("");
+const bar = (v,t,inv,col) => { const p=inv?(v<=t?100:Math.max(0,Math.round(t/v*100))):Math.min(100,Math.round(v/t*100)); return `<div class="barwrap"><div class="barbg"><div class="barfill" style="width:${p}%;background:${col}"></div></div><span class="barpct">${p}%</span></div>`; };
+const isRemoved = name => shiftOverrides[name]==="__removed__";
+const effShift = op => shiftOverrides[op.name]||op.shift;
+
+// ── BUILD BOARD ───────────────────────────────────────────────────────────────
+function buildBoard(pf) {
+  return Object.values(opMap).filter(op=>!isRemoved(op.name)).map(op => {
+    let recs = op.records.filter(r=>r.ign>0||r.idle>0);
+    if (pf&&pf!=="all") {
+      if(pf.startsWith("W:")){const k=pf.slice(2);recs=recs.filter(r=>wk(r.ds)===k);}
+      if(pf.startsWith("M:")){const k=pf.slice(2);recs=recs.filter(r=>mo(r.ds)===k);}
+    }
+    if (!recs.length) return null;
+    const area=areaMap[op.name]||"Dept Avg", ad=AREAS[area]||AREAS["Dept Avg"];
+    const days=recs.length;
+    const ti=recs.reduce((s,r)=>s+r.ign,0), tl=recs.reduce((s,r)=>s+r.idle,0);
+    const ai=ti/days, al=tl/days;
+    const im=ai>=ad.t, il=al<=IT;
+    const es=effShift(op);
+    return {...op,shift:es,area,days,ti,tl,ai,al,im,il,score:(im?1:0)+(il?1:0),igt:ad.t};
+  }).filter(Boolean);
+}
+
+function getPeriods() {
+  const ws=new Set(), ms=new Set();
+  Object.values(opMap).forEach(op=>op.records.forEach(r=>{
+    if(r.ign>0||r.idle>0){const w=wk(r.ds);if(w)ws.add(w);const m=mo(r.ds);if(m)ms.add(m);}
+  }));
+  return {weeks:[...ws].sort().reverse(), months:[...ms].sort().reverse()};
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render() {
+  renderStats();
+  if(activeTab==="lb")renderLB();
+  if(activeTab==="le")renderLE();
+  if(activeTab==="ar")renderAR();
+  if(activeTab==="snap")renderSnap();
+  if(activeTab==="data")renderData();
+  if(activeTab==="help")renderHelp();
+  document.getElementById("statgrid").style.display = "grid";
+  document.getElementById("legend").style.display = "flex";
+}
+
+function renderStats() {
+  const bd=buildBoard(period).filter(op=>shiftF==="All"||op.shift===shiftF);
+  const n=bd.length;
+  document.getElementById("statgrid").innerHTML = [
+    {l:"On Target (2/2)",v:bd.filter(o=>o.score===2).length,s:"ignition + idle met",c:"#2ed573"},
+    {l:"Partial (1/2)",  v:bd.filter(o=>o.score===1).length,s:"one metric met",     c:"#f59e0b"},
+    {l:"Ignition Met",  v:bd.filter(o=>o.im).length+"/"+n,  s:"vs area target",     c:"#60a5fa"},
+    {l:"Idle Target Met",v:bd.filter(o=>o.il).length+"/"+n, s:"≤ 1h 15m avg",       c:"#a78bfa"},
+  ].map(c=>`<div class="statcard"><div class="statlbl">${c.l}</div><div class="statval" style="color:${c.c}">${c.v}</div><div class="statsub">${c.s}</div></div>`).join("");
+}
+
+function renderLB() {
+  const bd=buildBoard(period).filter(op=>shiftF==="All"||op.shift===shiftF);
+  bd.sort((a,b)=>sortBy==="score"?(b.score!==a.score?b.score-a.score:b.ai-a.ai):sortBy==="ignition"?b.ai-a.ai:a.al-b.al);
+  const P=getPeriods();
+  const sP=["All",...SHIFTS.filter(s=>Object.values(opMap).some(o=>!isRemoved(o.name)&&effShift(o)===s))];
+  const sbtns=sP.map(s=>`<button class="fbtn${shiftF===s?" on":""}" onclick="setShift('${esc(s)}')">${esc(s)}</button>`).join("");
+  const pOpts=[`<option value="all"${period==="all"?" selected":""}>All Data</option>`,
+    ...P.weeks.map(w=>{const[y,n]=w.split("-W");return`<option value="W:${w}"${period==="W:"+w?" selected":""}>Wk ${n} ${y}</option>`;}),
+    ...P.months.map(m=>{const[y,n]=m.split("-");return`<option value="M:${m}"${period==="M:"+m?" selected":""}>${MN[+n-1]} ${y}</option>`;})
+  ].join("");
+  const xbtns=[["score","Score"],["ignition","Ignition"],["idle","Idle"]].map(([v,l])=>`<button class="sbtn${sortBy===v?" on":""}" onclick="setSort('${v}')">${l}</button>`).join("");
+  let rows="";
+  bd.forEach((op,i)=>{
+    const rk=i+1;
+    const rkh=rk===1?"🥇":rk===2?"🥈":rk===3?"🥉":`<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#f5f5f5;color:#999;font-size:12px;font-weight:700">${rk}</span>`;
+    const sc=op.score;
+    const scs=sc===2?"background:rgba(46,213,115,.1);border:2px solid #2ed573;color:#2ed573":sc===1?"background:rgba(245,158,11,.1);border:2px solid #f59e0b;color:#f59e0b":"background:rgba(255,71,87,.07);border:2px solid #ff4757;color:#ff4757";
+    const ic=op.im?"#2ed573":"#ff4757", lc=op.il?"#2ed573":"#ff4757";
+    const cls=`lbrow${sc===2?" s2":sc===1?" s1":""}${rk===1?" r1":rk===2?" r2":rk===3?" r3":""}`;
+    const uid="ae_"+i;
+    rows+=`<div class="${cls}">
+      <div style="text-align:center">${rkh}</div>
+      <div><div class="opname">${esc(op.name)}</div>
+        <div class="opmeta">${pill(op.shift)}<span class="areatag" onclick="toggleAE('${uid}')">${esc(op.area)} ✎</span>
+        <select id="${uid}" class="areasel" onchange="setArea('${esc(op.name)}',this.value)" onclick="event.stopPropagation()">${aselOpts(op.area)}</select></div>
+      </div>
+      <div><div class="dlbl">DAYS</div><div class="dval">${op.days}</div></div>
+      <div style="text-align:center"><div class="sccircle" style="${scs}">${sc}/2</div></div>
+      <div><div class="mrow"><span class="mlbl">IGNITION AVG</span><span class="mval" style="color:${ic}">${fmt(op.ai)}</span></div>${bar(op.ai,op.igt,false,ic)}<div class="mtgt">target ≥ ${fmt(op.igt)}</div></div>
+      <div><div class="mrow"><span class="mlbl">IDLE AVG</span><span class="mval" style="color:${lc}">${fmt(op.al)}</span></div>${bar(op.al,IT,true,lc)}<div class="mtgt">target ≤ ${fmt(IT)}</div></div>
+      <div><div class="totlbl">TOT IGN</div><div class="totval">${fmt(op.ti)}</div></div>
+    </div>`;
+  });
+  document.getElementById("tab-lb").innerHTML=`
+    <div class="controls"><div style="display:flex;gap:5px;flex-wrap:wrap">${sbtns}</div>
+    <select class="psel" onchange="setPeriod(this.value)">${pOpts}</select>
+    <div style="margin-left:auto;display:flex;gap:5px;align-items:center"><span style="font-size:9px;color:#bbb">SORT</span>${xbtns}</div></div>
+    <div class="colhdrs"><div>#</div><div>OPERATOR</div><div style="text-align:center">DAYS</div><div style="text-align:center">SCORE</div><div>IGNITION</div><div>IDLE</div><div>TOT</div></div>
+    <div class="lbrows">${rows||'<div class="empty">No operators for this selection</div>'}</div>`;
+}
+
+function renderLE() {
+  const P=getPeriods();
+  const cols=leView==="week"?P.weeks.slice(0,8):P.months.slice(0,6);
+  const ops=Object.values(opMap).filter(op=>!isRemoved(op.name)&&op.records.some(r=>r.ign>0||r.idle>0));
+  const fCol=c=>{if(leView==="week"){const[y,n]=c.split("-W");return`W${n}\n${y}`;}const[y,n]=c.split("-");return MN[+n-1]+"\n"+y;};
+  const getCell=(op,col)=>{
+    const recs=op.records.filter(r=>(r.ign>0||r.idle>0)&&(leView==="week"?wk(r.ds)===col:mo(r.ds)===col));
+    if(!recs.length)return null;
+    const ad=AREAS[areaMap[op.name]||"Dept Avg"]||AREAS["Dept Avg"];
+    const ai=recs.reduce((s,r)=>s+r.ign,0)/recs.length, al=recs.reduce((s,r)=>s+r.idle,0)/recs.length;
+    const im=ai>=ad.t,il=al<=IT;
+    return{ai,al,im,il,score:(im?1:0)+(il?1:0),days:recs.length};
+  };
+  const vbtns=[["week","Weekly LE"],["month","Monthly LE"]].map(([v,l])=>`<button class="fbtn${leView===v?" on":""}" onclick="setLeView('${v}')">${l}</button>`).join("");
+  let tbody="";
+  ops.forEach((op,i)=>{
+    const cells=cols.map(c=>getCell(op,c));
+    const tot=cells.reduce((s,c)=>s+(c?c.score:0),0), max=cells.filter(Boolean).length*2;
+    const tc=tot===max&&max>0?"#2ed573":tot>max/2?"#f59e0b":"#ff4757";
+    const bg=i%2===0?"#fafafa":"#fff", stk=bg;
+    tbody+=`<tr style="background:${bg}">
+      <td style="padding:7px 11px;border-bottom:1px solid #f0f0f0;position:sticky;left:0;background:${stk}"><div style="font-weight:600;margin-bottom:2px;color:#111">${esc(op.name)}</div>${pill(effShift(op))}</td>
+      <td style="padding:7px 8px;color:#999;border-bottom:1px solid #f0f0f0;font-size:10px;position:sticky;left:178px;background:${stk}">${esc(areaMap[op.name]||"Dept Avg")}</td>
+      ${cells.map(c=>{
+        if(!c)return`<td><span style="color:#ddd">—</span></td>`;
+        const sc=c.score,cc=sc===2?"#2ed573":sc===1?"#f59e0b":"#ff4757";
+        const cbg=sc===2?"rgba(46,213,115,.08)":sc===1?"rgba(245,158,11,.08)":"rgba(255,71,87,.06)";
+        const cbd=sc===2?"rgba(46,213,115,.2)":sc===1?"rgba(245,158,11,.2)":"rgba(255,71,87,.15)";
+        return`<td><div class="lecell" style="background:${cbg};border:1px solid ${cbd}"><div class="lesc" style="color:${cc}">${sc}/2</div><div class="led">${c.days}d</div><div class="lei" style="color:${c.im?"#2ed573":"#ff4757"}">⚡${fmt(c.ai)}</div><div class="lei" style="color:${c.il?"#2ed573":"#ff4757"}">💤${fmt(c.al)}</div></div></td>`;
+      }).join("")}
+      <td style="padding:5px 8px;border-bottom:1px solid #f0f0f0;text-align:center"><span style="font-weight:800;font-size:12px;color:${tc}">${max>0?tot+"/"+max:"—"}</span></td>
+    </tr>`;
+  });
+  document.getElementById("tab-le").innerHTML=`
+    <div class="lectrls">${vbtns}<span style="font-size:10px;color:#bbb;margin-left:4px">🟢 Both · 🟡 One · 🔴 Neither</span></div>
+    <div class="letwrap"><table class="letable"><thead><tr>
+      <th style="text-align:left;min-width:178px;position:sticky;left:0;background:#fff">OPERATOR</th>
+      <th style="text-align:left;min-width:88px;position:sticky;left:178px;background:#fff">AREA</th>
+      ${cols.map(c=>`<th>${fCol(c)}</th>`).join("")}
+      <th style="color:#f0d214;min-width:58px">TOTAL</th>
+    </tr></thead><tbody>${tbody}</tbody></table></div>`;
+}
+
+function renderAR() {
+  const allOps=Object.values(opMap).filter(op=>!isRemoved(op.name)&&op.records.some(r=>r.ign>0||r.idle>0)).sort((a,b)=>a.name.localeCompare(b.name));
+  const sp=SHIFTS.filter(s=>allOps.some(o=>effShift(o)===s));
+  const hasRemoved=Object.values(opMap).some(op=>isRemoved(op.name));
+  if(!arShift||!sp.includes(arShift))arShift=sp[0]||"";
+  const tabs=sp.map(s=>{const c=SC[s]||{bg:"#999",tx:"#fff"},on=s===arShift;return`<button onclick="setArShift('${esc(s)}')" style="padding:9px 16px;border:none;border-bottom:3px solid ${on?c.bg:"transparent"};background:transparent;color:${on?c.bg:"#888"};font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s">${esc(s)}</button>`;}).join("");
+  const removedTab=hasRemoved?`<button onclick="setArShift('__removed__')" style="padding:9px 16px;border:none;border-bottom:3px solid ${arShift==="__removed__"?"#ff4757":"transparent"};background:transparent;color:${arShift==="__removed__"?"#ff4757":"#888"};font-family:inherit;font-size:11px;font-weight:700;cursor:pointer">🗑 Removed</button>`:"";
+  let cards="";
+  if(arShift==="__removed__"){
+    Object.values(opMap).filter(op=>isRemoved(op.name)).forEach(op=>{
+      cards+=`<div class="arcard" style="border-color:rgba(255,71,87,0.2)"><div style="flex:1"><div class="arname" style="text-decoration:line-through;color:#bbb">${esc(op.name)}</div><span style="font-size:9px;color:#ff4757">Removed</span></div><button onclick="restoreOp('${esc(op.name)}')" style="background:rgba(46,213,115,.08);border:1px solid rgba(46,213,115,.25);color:#2ed573;border-radius:5px;padding:5px 10px;font-size:10px;cursor:pointer">↩ Restore</button></div>`;
+    });
+  } else {
+    allOps.filter(op=>effShift(op)===arShift).forEach(op=>{
+      const isOv=shiftOverrides[op.name]&&shiftOverrides[op.name]!=="__removed__";
+      cards+=`<div class="arcard" style="${isOv?"border-color:rgba(245,158,11,0.3)":""}">
+        <div style="flex:1"><div class="arname">${esc(op.name)}</div>${isOv?`<span style="font-size:9px;color:#f59e0b">⚠ Moved from ${esc(op.shift)}</span>`:""}</div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+          <select class="arsel" onchange="setArea('${esc(op.name)}',this.value)">${aselOpts(areaMap[op.name]||"Dept Avg")}</select>
+          <div style="display:flex;gap:4px">
+            <select onchange="moveOp('${esc(op.name)}',this.value);this.value=''" style="background:#fff;border:1px solid #d0d0d0;color:#666;border-radius:4px;padding:2px 4px;font-size:9px;outline:none">
+              <option value="">Move to...</option>
+              ${SHIFTS.filter(s=>s!==arShift).map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join("")}
+            </select>
+            <button onclick="removeOp('${esc(op.name)}')" style="background:rgba(255,71,87,.07);border:1px solid rgba(255,71,87,.2);color:#ff4757;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer">✕</button>
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+  document.getElementById("tab-ar").innerHTML=`
+    <div style="display:flex;border-bottom:1px solid #e5e5e5;margin-bottom:14px;flex-wrap:wrap;background:#fff;border-radius:8px 8px 0 0">${tabs}${removedTab}</div>
+    ${arShift!=="__removed__"?`<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:9px 13px;background:#fff;border-radius:8px;border:1px solid #e5e5e5"><span style="font-size:11px;color:#888">Bulk assign all <strong style="color:#111">${esc(arShift)}</strong> to:</span><select class="arsel" onchange="bulkArea('${esc(arShift)}',this.value)">${aselOpts("Dept Avg")}</select></div>`:""}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:7px">${cards||'<div class="empty">No operators</div>'}</div>`;
+}
+
+function renderData() {
+  const P=getPeriods();
+  const totalRecs=Object.values(opMap).reduce((s,op)=>s+op.records.length,0);
+  const totalOps=Object.keys(opMap).length;
+  document.getElementById("tab-data").innerHTML=`
+    <div class="data-panel">
+      <div class="data-panel-title">📦 Database Summary</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+        <div class="statcard"><div class="statlbl">Total Records</div><div class="statval" style="color:#60a5fa">${totalRecs.toLocaleString()}</div><div class="statsub">across all uploads</div></div>
+        <div class="statcard"><div class="statlbl">Operators</div><div class="statval" style="color:#a78bfa">${totalOps}</div><div class="statsub">in database</div></div>
+        <div class="statcard"><div class="statlbl">Weeks of Data</div><div class="statval" style="color:#2ed573">${P.weeks.length}</div><div class="statsub">date range covered</div></div>
+        <div class="statcard"><div class="statlbl">Months of Data</div><div class="statval" style="color:#f59e0b">${P.months.length}</div><div class="statsub">date range covered</div></div>
+      </div>
+      <div style="font-size:11px;color:#999;margin-bottom:6px">Date range: <strong style="color:#555">${P.weeks.length?P.weeks[P.weeks.length-1]+" to "+P.weeks[0]:"No data yet"}</strong></div>
+    </div>
+    <div class="data-panel">
+      <div class="data-panel-title">⚠️ Danger Zone</div>
+      <div style="font-size:12px;color:#999;margin-bottom:12px">Clearing records removes all SmartLift data from the database. Area assignments and shift overrides are kept. This cannot be undone.</div>
+      <button class="danger-btn" onclick="confirmClearRecords()">🗑 Clear All SmartLift Records</button>
+      <div class="success-msg" id="clear-success">Records cleared successfully</div>
+    </div>`;
+}
+
+async function confirmClearRecords() {
+  if (!confirm("This will delete ALL SmartLift records from the database. Area assignments will be kept. Are you sure?")) return;
+  showLoading("Clearing records...");
+  try {
+    await clearAllRecords();
+    opMap = {};
+    await loadFromSupabase();
+    hideLoading();
+  } catch(e) {
+    hideLoading();
+    alert("Error clearing records: " + e.message);
+  }
+}
+
+function renderHelp() {
+  var h = "";
+  h += '<div style="max-width:820px">';
+  h += '<div style="background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:20px 24px;margin-bottom:16px">';
+  h += '<div style="font-family:Barlow Condensed,sans-serif;font-size:18px;font-weight:900;color:#0f0f0f;letter-spacing:1px;margin-bottom:8px">SCHEME OVERVIEW</div>';
+  h += '<p style="color:#666;font-size:12px;margin-bottom:14px">A 3-month incentive scheme June to August 2026. Operators qualify by hitting two performance targets based on SmartLift data, alongside zero unauthorised absence.</p>';
+  h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">';
+  h += '<div style="background:#f9f9f9;border-radius:8px;padding:12px 14px;border:1px solid #e5e5e5"><div style="font-size:10px;color:#999;margin-bottom:4px">TARGET 1</div><div style="font-size:13px;font-weight:700;color:#2ed573">Ignition Time</div><div style="font-size:11px;color:#bbb;margin-top:3px">10% above area benchmark</div></div>';
+  h += '<div style="background:#f9f9f9;border-radius:8px;padding:12px 14px;border:1px solid #e5e5e5"><div style="font-size:10px;color:#999;margin-bottom:4px">TARGET 2</div><div style="font-size:13px;font-weight:700;color:#2ed573">Idle Time</div><div style="font-size:11px;color:#bbb;margin-top:3px">Below 1h 15m average per day</div></div>';
+  h += '<div style="background:#f9f9f9;border-radius:8px;padding:12px 14px;border:1px solid #e5e5e5"><div style="font-size:10px;color:#999;margin-bottom:4px">CONDITION</div><div style="font-size:13px;font-weight:700;color:#f59e0b">Absence</div><div style="font-size:11px;color:#bbb;margin-top:3px">Zero unauthorised absence</div></div>';
+  h += '</div></div>';
+  var areas=[["Dry Goods","7h 29m","8h 14m"],["Line Support","7h 44m","8h 30m"],["MAG1 Loading","9h 12m","9h 45m"],["Tent Loading","8h 23m","9h 45m"],["Dept Avg","8h 28m","9h 19m"]];
+  h += '<div style="background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:20px 24px;margin-bottom:16px">';
+  h += '<div style="font-family:Barlow Condensed,sans-serif;font-size:18px;font-weight:900;color:#0f0f0f;letter-spacing:1px;margin-bottom:12px">IGNITION BENCHMARKS BY AREA</div>';
+  h += '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="border-bottom:1px solid #e5e5e5"><th style="text-align:left;padding:8px 12px;color:#999;font-size:10px">AREA</th><th style="text-align:center;padding:8px 12px;color:#999;font-size:10px">BENCHMARK</th><th style="text-align:center;padding:8px 12px;color:#999;font-size:10px">TARGET +10%</th></tr></thead><tbody>';
+  areas.forEach(function(a,i){h+='<tr style="background:'+(i%2===0?"#fafafa":"#fff")+';border-bottom:1px solid #f0f0f0"><td style="padding:9px 12px;font-weight:700;color:#222">'+a[0]+'</td><td style="padding:9px 12px;text-align:center;color:#888">'+a[1]+'</td><td style="padding:9px 12px;text-align:center;font-weight:700;color:#2ed573">'+a[2]+'</td></tr>';});
+  h += '</tbody></table></div>';
+  h += '<div style="background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:20px 24px;margin-bottom:16px">';
+  h += '<div style="font-family:Barlow Condensed,sans-serif;font-size:18px;font-weight:900;color:#0f0f0f;letter-spacing:1px;margin-bottom:12px">HOW TO USE</div>';
+  var steps=[["1","Upload SmartLift Data","Drop your export on the upload zone. Data is saved to the database automatically — it accumulates over time, so you never lose history."],["2","Assign Work Areas","Go to Area Assignments and set each operator to their working area. This is saved permanently to the database."],["3","Move or Remove Operators","Use the shift tabs to correct operators on the wrong shift. Removed operators are hidden from all views but can be restored."],["4","Check the Leaderboard","Operators ranked by score. Filter by shift, select a specific week or month, sort by any metric."],["5","Week/Month LE","Grid view showing every operator x every period. Use this to spot trends over the course of the scheme."],["6","Snapshot","Upload two exports to generate a branded before/after comparison for leadership."]];
+  steps.forEach(function(s){h+='<div style="display:flex;gap:14px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #f5f5f5"><div style="min-width:28px;height:28px;border-radius:50%;background:rgba(240,210,20,0.15);border:2px solid rgba(240,210,20,0.4);display:flex;align-items:center;justify-content:center;font-weight:900;color:#b8960a;font-size:13px;flex-shrink:0">'+s[0]+'</div><div><div style="font-weight:700;color:#111;font-size:12px;margin-bottom:3px">'+s[1]+'</div><div style="font-size:11px;color:#888">'+s[2]+'</div></div></div>';});
+  h += '</div></div>';
+  document.getElementById("tab-help").innerHTML = h;
+}
+
+// ── SNAPSHOT ──────────────────────────────────────────────────────────────────
+async function handleSnapFile(slot, file) {
+  const iconId=slot==="prev"?"snap-icon-prev":"snap-icon-curr";
+  const lblId=slot==="prev"?"snap-lbl-prev":"snap-lbl-curr";
+  document.getElementById(iconId).textContent="⏳";
+  document.getElementById(lblId).textContent="Reading "+file.name+"...";
+  try {
+    const rows=await readXLSX(file);
+    if(!rows.length)throw new Error("No rows found");
+    const label=file.name.replace(/\.xlsx?$/i,"").replace(/_/g," ");
+    if(slot==="prev")snapPrev={rows,label,loaded:true};
+    else snapCurr={rows,label,loaded:true};
+    document.getElementById(iconId).textContent="✅";
+    document.getElementById(lblId).textContent="Loaded: "+file.name;
+    if(snapPrev.loaded&&snapCurr.loaded)buildSnapshot();
+  } catch(e) {
+    document.getElementById(iconId).textContent="❌";
+    document.getElementById(lblId).textContent="Error: "+e.message;
+  }
+}
+
+function snapStats(rows) {
+  const map={};
+  rows.forEach(row=>{
+    const name=String(row["Operator"]||"").trim();
+    if(!name)return;
+    if(!map[name])map[name]={records:[]};
+    map[name].records.push({
+      ign:parseFloat(row["Hours in Ignition"])||0,
+      idle:parseFloat(row["Hours Idling"])||0,
+    });
+  });
+  let ignVals=[],idleVals=[],ignMet=0,idleMet=0,bothMet=0,total=0;
+  Object.values(map).forEach(op=>{
+    op.records.forEach(r=>{
+      if(r.ign>0||r.idle>0){
+        total++;
+        if(r.ign>0)ignVals.push(r.ign);
+        if(r.idle>0)idleVals.push(r.idle);
+        if(r.ign>=9+19/60)ignMet++;
+        if(r.idle>0&&r.idle<=1.25)idleMet++;
+        if(r.ign>=9+19/60&&r.idle>0&&r.idle<=1.25)bothMet++;
+      }
+    });
+  });
+  const avg=arr=>arr.length?arr.reduce((s,v)=>s+v,0)/arr.length:0;
+  return{avgIgn:avg(ignVals),avgIdle:avg(idleVals),ignPct:total?Math.round(ignMet/total*100):0,idlePct:total?Math.round(idleMet/total*100):0,bothPct:total?Math.round(bothMet/total*100):0,operators:Object.keys(map).length,total};
+}
+
+function buildSnapshot() {
+  const prev=snapStats(snapPrev.rows), curr=snapStats(snapCurr.rows);
+  const idleImprove=prev.avgIdle>0?Math.round((prev.avgIdle-curr.avgIdle)/prev.avgIdle*100*10)/10:0;
+  const ignChange=prev.avgIgn>0?Math.round((curr.avgIgn-prev.avgIgn)/prev.avgIgn*100*10)/10:0;
+  const idlePctDiff=curr.idlePct-prev.idlePct;
+  const idleHit=curr.avgIdle<=1.25, ignHit=curr.avgIgn>=9+19/60;
+  const LOGO_B64="/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCACUAPoDASIAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAcIBQYJBAID/8QATRAAAQMDAgQDAwYICggHAAAAAQACAwQFEQYHCBIhMRNBUSJhcRQVMkKBkRY3OFJ1odHSCRcYM1ViZXazwiMkNGRyssHDc3SCkpSVsf/EABsBAQEAAwEBAQAAAAAAAAAAAAABBAUGBwID/8QALREBAAECBQIEBAcAAAAAAAAAAAECAwQFESExEkEGE1GBYbHB4QcUFTNxkdH/2gAMAwEAAhEDEQA/ALloiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIg1/U+rbbYyYXk1NXjIgjIyPTmPkP1+5aVVa+vdQ/MAp6Vv5rWcx+89/uC0vnfJI+SRznveeZznHJJPmV6Il5HmfijHYmqfLq6KfSPrPP0dJZy+1bjeNZSNoS+Xm63jwaqq8SBkTnvHI3v2HXC3tazt9ZnWq0GoqW8lRUYe4H6jfIH3+axeqNWSPkfR2qTkjHR047u/4fQe9dbhMy/RsqpvZhXM11azETvVvxG/pHPo1d21+YvzTajaG9Io/wBGXuSlrBS1UrnwTkdXHPI4+fw9VIC22R53ZzjD+dajSY2mO8T9+0sbEWKrFXTIvmR7Y43SPcGsaCXE9gAvpQvxl64do3ZS409HOIrnfD8203X2msf/ADzh7xHzAEdi5p8luX4Pmi4otnay7QW2G+1viT1DYGSOt8oj5nODQS7GA3J7+impckJrDdoNL0upH0kkVqqqp9HTVHbmljaHOA+Ge/qD6LpJwy64/D7Z2zXeeVr7hTx/I67Hfxo/ZJ7nuMH7UElqIdYcR21uk9T1+nLzc7hHcKCXwqhkdvle1rsA9HAYPQhS8uY/Ew3n4hdYszjmuQGfTMbEFxP5V+zX9L3T/wCrm/dWyaK3/wBp9XXNlstOq4Y62QgRw1kMlMZCfJviABx9wKhC18GFurbVS1n8Ydex1RAyXHzYwhvM0HH0/eob4h9iL1tE2hrZrrFerNXS+BFVtgML2ShpdyPZk4JDXEEH6pUHSMEEZByCow3J3326291M7Tupq+uguDYWTFkVDJK3kdnB5mjHkVo/AvuHc9Y7e3CxXurfV1+n544mTSHL300jSY+Y+ZBa9ufRoz1UA8eX4/ZP0XT/AOZUXw0hqC2ar0zQais0j5bfcIRNTvewsc5h7Eg9Qsqo34YPyf8ARX6Ki/8AxSQgIiIPDqC60djsdbebg57aSigfPM5jC5wY0ZOAOpOB2UMjiw2ZIyLxdCD/AGXN+xSPvL+KfVX6JqP8MrnBsNoWHcncS26Qnuctsjq4JZDUxwiRzeRnMBykgdUF2WcV2zJcAbzc2g+Ztc+B9zVIe3e52hdwYnu0lqKkuEkYDpIBlkzAfN0bgHAdD5KutRwT0fhH5PuPViTy8S1MLT90gKrlrGw6u2U3VNCK4U96tT2VFLWUziGTRu6tcPPldggtPoQoOo6LXNsdSt1jt5YdUCMRG50MVQ9gOeRzmjmb9hyFsaoIiICIiAiIggO12e63B4bSW+pkB+t4ZDf/AHHopJ0joiG3yMrbm5s9S0hzIx9Bh9fef1BbmAAMAABFy+XeFMJhK4uXJ66o414j2/1sL+Y3LsdMbQ1PcW7uo6Flvgc5stTnnc04IYP29lH8fZZfX07p9VVLS7Iha2MD06Z/6rER9l5p4sx9WMzG5rO1M9Me20/3LaYO1FuzHx3eqHy+ClWx1Dqu0U1Q/q50Y5viOhUVReXwUm6TYWWClz9Zuf1ra/h1crjG3qI4mnX3iY0+csXM4joifiyq5+cb2tH6u3ibpy3P8alsLBSRtach9TIQX+eCRlrc/EK7O7usKfQO2191bUBjzb6Rz4I3nAlmPsxM6dfaeWj7VRHhJ0lU7h79UlyvBfVwWyV16uMrh/Ozh/NGDjp7UpDiOxDHBevNKsbuPswyHhAbo+ipg672SkbdI+Ue1JUs9uYdO5c0yN95IKh3gD14LLuHV6Lq5sUWoIfFpck4bVRNJx7ueMO7+bGjzVi96+ITQm3Qntb5TfL2Glpt1G4HkPpK/sz4dT36LndJdHR6hmvFmBtEjat9TSx0kxBpMvLmtY4YPsg4B6dlFdXb/qXT1gidJe73brc1reY/KKhrDj1wTlc0d/LtbL1vhqi8WmthrbfUXESQ1EJ5mSNDGAkHzGQfuW76A4a9yNxbTQ6lqLrbIbdcIhNBVVlW+okc0+fL3H3qLNwdLT6N15dNI1NZFVzW6pFO+eNha15LWnIB6j6X6kIXv0/xLbNwWmgopdVeHLDTRxv56WQAENAIzjChbjY3k0brnS9m0ppOvZdBDXtuNVVRg+HHyxSMawE93HxCTjty+9Zqg4MbdW2emrYtwK9sk8DJQ11vZyguaDj6XvUX7y8M+ttvbHUaggqqXUFmpml9VJTNLJaeMd3uYe7R5kdvTGcEWA4DNAXLS2g7rqS8UktJVahmidDDICHCmia7kcWnsS57z8MKCuPL8fsn6Lp/8ykLgk3rvlw1FHtpquvfcIZoHPs1VMcyxujbl0DnfWaWguaT1HKRkggCPePL8fsn6Lp/8yKthw+vfFwx6Zkje5j2WEOa5pwQQw4IVL9rd/teaZ1RDfL/AKnvt/pIaSfloKqtc6KSZ0ThGX5P0Q8gnz6dFc7YL8l/Tf8Ad/8A7ZVEeHCwUWp95dJWe5RNmopKtsk0Tu0jWNL+U/EgIjcLwOJTcWmk1PNTavqaGUmWIU2aaFje48OMFp5cdjgk98nOT5tqN/txdvdTRMvF2uN1tEcoiuFsuTi50bQfaLC4c8bxknHY+YPTHR1jWsY1jGhrWjAAGAB6KgXHvZaG1b2wVlHCyJ90tcdTUBgwHSB72c3xIaMnzRVxty7lR3jZC/3W3zNmpKuxzTQyNPRzHREg/rVAOFnVVj0XvFZtRajrBR22npp2STFpdyl0eG9B16lW826nlqOCOnfK7mLdMTMHua1jgB9wCpVsboX+MjcC26QNyNtFXBJIagR85byM5sY96IvRU8UOy8EJk/Cl8uPqRUcr3H4ANVNt79X1u9e8z7jpuzVb/lDIaC2UnLmZ7Gk4c4DoMue4n80d+ynE8FLcHG4E2f8AyDf3lDe7+1Ot9idQWy8w3dzoJZj833agLo3RytGeRw+q7GT6OAd6Iq/e0mmpNHbZ6d0xPIJZ7db4oJntGA54b7RHuzlVy4ouJq4WK91ei9uqiCKppD4dwu7mCQxyeccQPs5Hm8g4PQDIyts2m3zrdVcOOqdS3MsOo9M0crK0xtDfFPhF0cwA6N5uvQYHMx2OmFUTYu96Rs26FDqLcNk9bb6UvqXMbCZjLU92uc3zAcS7r54VRs9LpjiR1VDFqKKm1vWsky+OokrTEXD1DXPacdsdFmdueIfdLbTU5s+tn3G80EMjWVtvujMVdO386N5AdnHUBxLSO2M5VhBxc7SAYEl6AH9nvUGcWe6G1m6NmttfpyGubqWhmEYnlo3R+LTOzzRud2IBw4Z7HOPpHMVMXFff75ddmLJudtnqy60dDE9r6h1BUujEtPLhuXNH1mPABz9H28rF8CW5191R+EOl9VXysu1dAWVtJNVy88nhkBj2cx6kAhpA8su9ViOBnGsNotdbfXcme2CYCJshLhG2ojIcAPIBzObHq5x81Bmzl2rNpeIihjubnQfILk+1XHmI/m3O8Mkn0zyuz6IjpTcauC32+pr6p/JBTROlld6NaCSfuC5oam393Wr9SXOut2rrvS0VRWSy08EVU4Mijc8lrWjPQAEAfBXE41tZfgxsjV0dLPyVl+kbQQFp68jhzSEEdsMB6+8eq54DlAwCAB5JKuk+j9cV9vlZS3SR9XRdud3WSP7frD3HqpWpp4amnjqIJGyRSNDmOaehChrVGk7jYpZJeU1FDn2Z2j6I/rDy+PZbNtLdZHPntMr3Oby+LDk5x2Dh8Oo/WuDyLNcVhMXGX43XfjXmPfvE9m3xmHt3LfnWvdiNbxmPVtdkH2nNePgWj9hWNj7Lctz7a8up7pGwcoHhSnz/AKv/AFH2rVLdSVNbM2ClhfLIfJo7e8+gXDeI8Bds5pctRTMzVOsfHqnXb5M3DXYqsU1ekfJ6rXSy1tXFTQjL5CAPd6lSvTQsp6eOCMYYxoaPsWH0tYWWmEySlslU8Yc4dmj80ftWcPZei+D8gryrD1XL/wC5XprHpEcR/Pr9moxuJi9VpTxCn38IZrbPzJt9STdz841zQfIZbED9vMfsUEbWar1pS2Cq0FtrbqsX7UFSDXVlH/tMkLRysiY/p4UYyXOeSMFx6gKVNy+H7efcDdC66lr6O2U0Nyrf9G6St5vk1ODysHKB9VmCQD1Ocd1aXZTafS+1envkFkphLXztaa64ytHjVLh6nyaOuGjoPjldgwkJbP8ACFZqKKG57lVbrrVn23W2llcynafR7xh7/sIHxWI48ttbRZ9K6c1Tpuz0ltpaCU26ohpIGxRtjfl0buVoA+kCM/1grhrVt2tJQa722v2k5+UfONG6OF7u0cw9qJ//AKZGsd9iqIA/g+tdtuGlrpoCsnBqrU81dE0nq6mecOA8zyvPwAe0KuHEt04iNXk/0o3/AJI1L2w2xu823e6lk1TJbbeKOGQw3COK4DMlPIOWQYx1I6PA/OY1flvhw6boaq3b1JqKzW+3SW+4VfiwOkrQxxbyNb1GDjsoq2+m9Tabj07bWP1DaGubSRAg1seQeQe9advnvDobSOg7r4l7t1yuNRSyQ0tvp6hsr5nuaQAQ0nlb16k+WVUT+Shu9/Q1m/8AnN/dWRsXCLupV1bGVvzDa6cuxJK6qMjgPUNa3r94RGtcHVoq7nxCaXbTMkLaEy1dQ9nZkbInDJ9xc5jfi4LYuPL8fsn6Lp/8yttsDsxp3aS0TsoJZLheK0NFbcJgA54HUMYB9FgJzjzPU5wMQrxV7Gbh7gbsP1DpqhoZqA0MMIdNViN3M3OemD6hFTFsF+S/pv8Au/8A9sqlPCB+UBpH/wAR/wDhOV8NqNM3bTux1n0rcoo23OktPyWVjHhzfE5SOh9FWbh54etzdGbt6f1FfLfb47fRSOM7o6wPcAY3N6DHXqQiLrKif8If+N6xfoFv+PKr2KrHGBsvrzcjcK13nStHRT0lNam00hnqRGefxZHdBg9MOCsjaNsvyIIf7uVH/K9Vc4Lqqlot/bDU1tTBTQNpKkOkmkDGjMRx1PRXI0XofUFq4YW6EqoIfntlmmpPDbKCwyODgBzenUdVUZvClvEI2sdarS4AAda8fuqC/Z1TpgDJ1HZwB/vsf7VU7jw3R0nqCw2zQ2n7hTXarhr211ZPTuEkVOGMe1rA8dC9xfnpnABz3CjUcKG7xODZ7MPea4fureNu+DfUdTXRy64vdDbqFrgXU1tcZZZB6c5ADfToCg9fBZoas1FtBuaydj2UWoImW2nd253xxylxHuzM0Z9QfRQNtVDpKzbo09q3UtDqizxyvoq9jppYTTS55RITG5rsAjr7jldNNI6ds2k9N0WndPUEVBbKGPw4IIx0AzkknuXEkkuPUkknqVCHEdw123cS4zao0zVRWfUcjR8oD2/6vWEDAc8Dq1+OnMO/TIOOoZu38N+wdwooa6g0lDVUs7Q+KaG8Vb2PaexDhNghRbuxY+E7bm+R2S66TnrbgWl00NDcqyU0/oH4m9knr079FEbtheIHT8tRbbXZboKZ7sOdbLwxkE3QdceIw+7q0dlve0PCHf6+5Q3Dcmoht9uDhJJb6WfxKic+bXyDowHzwSevcIqwnDJaduY9G1Gpdt9L1tht13m6mqmle6pEWWh4Ej3ENyXjyzg+4qtXH7oQWbcak1pSQFtFqGARVRGcCqiby59BzRhnbzY4+avJa6CitVtprbbaWGkoqWJsNPBE0NZGxow1rQOwAGFoHEjt6/cram42CkZEbmwtqbe6QgATMOQM4OARlpPoSqih+825tz3Mo9F0MzJ5p7LZ2UcrS3L6itc7lkeMd+drIsYHcuCs1pvg90DJp22SXya4m6upIjWmKchhnLB4nL7ubOFouxHDLriz7qWa960obfFabdKaoiKpEpfK0ZjBGB05sHPqArsKAQCMHqF4IbNa4K8V8FDDDUAEc8Y5c575A6Fe9F8V2qLkxNdMTpxr2WKpjiX51MEVTTvp52CSKRvK5p8wvmkpaakiEVLBHDGPqsaAF+yK+XR19eka8a9zWdNBERfaCIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiD/9k=";
+  const arrowHtml=(val,higherBetter)=>{if(Math.abs(val)<1)return'<span style="color:#bbb;font-size:11px">— No change</span>';const good=higherBetter?val>0:val<0;const sym=val>0?"▲":"▼";const col=good?"#2ed573":"#ff4757";return`<span style="color:${col};font-family:Barlow Condensed,sans-serif;font-size:13px;font-weight:700">${sym} ${Math.abs(val)}%</span>`;};
+  const ppArrow=val=>{if(val===0)return'<span style="color:#bbb;font-size:11px">— No change</span>';const col=val>0?"#2ed573":"#ff4757";const sym=val>0?"▲":"▼";return`<span style="color:${col};font-family:Barlow Condensed,sans-serif;font-size:13px;font-weight:700">${sym} ${val>0?"+":""}${val}pp</span>`;};
+  const bp=(v,max)=>Math.min(100,Math.round(v/max*100));
+  const html=`<div style="background:#f0f0f0;padding:20px;border-radius:10px"><div style="width:1100px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.1);font-family:Barlow,sans-serif">
+    <div style="background:#0f0f0f;border-bottom:3px solid #f0d214;padding:22px 36px;display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:18px">
+        <img src="data:image/png;base64,${LOGO_B64}" style="height:38px;filter:brightness(0) invert(1)" alt="ABInBev"/>
+        <div style="width:1px;height:38px;background:rgba(255,255,255,0.15)"></div>
+        <div><div style="font-family:Barlow Condensed,sans-serif;font-size:22px;font-weight:900;color:#f0d214;letter-spacing:1px;line-height:1">FORKLIFT OPERATOR INCENTIVE SCHEME</div><div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1px;margin-top:3px">SMARTLIFT PERFORMANCE SNAPSHOT — DEPARTMENT OVERVIEW</div></div>
+      </div>
+      <div style="text-align:right"><div style="display:inline-block;padding:3px 12px;background:rgba(240,210,20,0.15);border:1px solid rgba(240,210,20,0.4);color:#f0d214;font-family:Barlow Condensed,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;border-radius:20px;margin-bottom:5px">INCENTIVE SCHEME TRACKER</div><div style="font-size:10px;color:rgba(255,255,255,0.3)">${esc(snapPrev.label)} vs ${esc(snapCurr.label)}</div></div>
+    </div>
+    <div style="background:#1a1a1a;padding:10px 36px;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:11px;color:rgba(255,255,255,0.45)">Targets: ignition <strong style="color:rgba(255,255,255,0.7)">9h 19m/day</strong> · idle <strong style="color:rgba(255,255,255,0.7)">1h 15m/day</strong> · zero unauthorised absence</div>
+      <div style="display:flex;gap:8px">
+        ${idleHit?'<span style="padding:3px 10px;background:rgba(46,213,115,0.15);border:1px solid rgba(46,213,115,0.3);color:#2ed573;border-radius:20px;font-size:9px;font-weight:700">Idle Target Met</span>':'<span style="padding:3px 10px;background:rgba(255,71,87,0.15);border:1px solid rgba(255,71,87,0.3);color:#ff4757;border-radius:20px;font-size:9px;font-weight:700">Idle Not Yet Met</span>'}
+        ${ignHit?'<span style="padding:3px 10px;background:rgba(46,213,115,0.15);border:1px solid rgba(46,213,115,0.3);color:#2ed573;border-radius:20px;font-size:9px;font-weight:700">Ignition Target Met</span>':'<span style="padding:3px 10px;background:rgba(240,210,20,0.15);border:1px solid rgba(240,210,20,0.3);color:#f0d214;border-radius:20px;font-size:9px;font-weight:700">Ignition Building</span>'}
+      </div>
+    </div>
+    <div style="padding:28px 36px">
+      <div style="background:#0f0f0f;border-radius:12px;padding:18px 22px;display:flex;align-items:center;gap:18px;margin-bottom:28px">
+        <div style="font-size:28px;flex-shrink:0">💡</div>
+        <div style="flex:1"><div style="font-family:Barlow Condensed,sans-serif;font-size:18px;font-weight:900;color:#fff;letter-spacing:.5px;margin-bottom:4px">${idleImprove>0?`IDLE TIME DOWN ${idleImprove}% SINCE BASELINE`:ignChange>0?`IGNITION TIME UP ${ignChange}% SINCE BASELINE`:"PERFORMANCE TRACKING IN PROGRESS"}</div><div style="font-size:11px;color:rgba(255,255,255,0.45);line-height:1.6">Before: avg idle <strong style="color:rgba(255,255,255,0.75)">${fmt(prev.avgIdle)}</strong>, avg ignition <strong style="color:rgba(255,255,255,0.75)">${fmt(prev.avgIgn)}</strong>. Current: idle <strong style="color:${idleHit?"#2ed573":"#ff4757"}">${fmt(curr.avgIdle)}</strong>, ignition <strong style="color:${ignHit?"#2ed573":"#f0d214"}">${fmt(curr.avgIgn)}</strong>.${idleHit?" Idle is already <strong style='color:#2ed573'>below target</strong> — operators are responding.":""}</div></div>
+        <div style="flex-shrink:0;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="text-align:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 16px"><div style="font-family:Barlow Condensed,sans-serif;font-size:30px;font-weight:900;color:${idleImprove>0?"#2ed573":"#ff4757"};line-height:1">${Math.abs(idleImprove)}%</div><div style="font-size:9px;color:rgba(255,255,255,0.35);margin-top:2px">IDLE ${idleImprove>0?"REDUCTION":"INCREASE"}</div></div>
+          <div style="text-align:center;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 16px"><div style="font-family:Barlow Condensed,sans-serif;font-size:30px;font-weight:900;color:${ignChange>0?"#2ed573":"#ff4757"};line-height:1">${ignChange>0?"+":""}${ignChange}%</div><div style="font-size:9px;color:rgba(255,255,255,0.35);margin-top:2px">IGNITION CHANGE</div></div>
+        </div>
+      </div>
+      <div style="font-family:Barlow Condensed,sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:#999;text-transform:uppercase;margin-bottom:14px">Period Comparison</div>
+      <div style="display:grid;grid-template-columns:1fr 50px 1fr;gap:0;margin-bottom:28px;align-items:start">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #f3f4f6"><div style="width:10px;height:10px;border-radius:50%;background:#999;flex-shrink:0"></div><div><div style="font-family:Barlow Condensed,sans-serif;font-size:18px;font-weight:700;color:#111">${esc(snapPrev.label).toUpperCase()}</div><div style="font-size:10px;color:#bbb">${prev.total} ACTIVE OPERATOR DAYS</div></div></div>
+          ${[{label:"Avg Ignition / Day",val:fmt(prev.avgIgn),col:"#999",bar:bp(prev.avgIgn,12)},{label:"Avg Idle / Day",val:fmt(prev.avgIdle),col:"#f87171",bar:bp(prev.avgIdle,2)},{label:"Idle Target Met",val:prev.idlePct+"%",col:"#999",bar:prev.idlePct},{label:"Both Targets Met",val:prev.bothPct+"%",col:"#999",bar:prev.bothPct}].map(m=>`<div style="background:#f9fafb;border:1px solid #f0f0f0;border-radius:8px;padding:13px 15px;margin-bottom:8px"><div style="font-size:9px;font-weight:600;color:#bbb;letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px">${m.label}</div><div style="font-family:Barlow Condensed,sans-serif;font-size:30px;font-weight:900;color:${m.col};line-height:1">${m.val}</div><div style="height:4px;background:#e5e5e5;border-radius:2px;overflow:hidden;margin-top:8px"><div style="height:100%;width:${m.bar}%;background:${m.col};border-radius:2px"></div></div></div>`).join("")}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0;padding-top:58px;align-items:center">
+          ${[arrowHtml(ignChange,true),arrowHtml(-idleImprove,false),ppArrow(idlePctDiff),ppArrow(curr.bothPct-prev.bothPct)].map(a=>`<div style="height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px"><span style="font-size:16px;color:#e5e5e5">→</span>${a}</div>`).join("")}
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #fef9c3"><div style="width:10px;height:10px;border-radius:50%;background:#f0d214;flex-shrink:0"></div><div><div style="font-family:Barlow Condensed,sans-serif;font-size:18px;font-weight:700;color:#b8960a">${esc(snapCurr.label).toUpperCase()}</div><div style="font-size:10px;color:#bbb">${curr.total} ACTIVE OPERATOR DAYS</div></div></div>
+          ${[{label:"Avg Ignition / Day",val:fmt(curr.avgIgn),hit:ignHit,bar:bp(curr.avgIgn,12),bg:ignHit?"linear-gradient(135deg,#f0fdf4,#dcfce7)":"#fffbeb",bd:ignHit?"#bbf7d0":"#fde68a",col:ignHit?"#16a34a":"#d97706"},{label:"Avg Idle / Day",val:fmt(curr.avgIdle),hit:idleHit,bar:bp(curr.avgIdle,2),bg:idleHit?"linear-gradient(135deg,#f0fdf4,#dcfce7)":"#fef2f2",bd:idleHit?"#bbf7d0":"#fecaca",col:idleHit?"#16a34a":"#dc2626"},{label:"Idle Target Met",val:curr.idlePct+"%",hit:curr.idlePct>prev.idlePct,bar:curr.idlePct,bg:curr.idlePct>prev.idlePct?"linear-gradient(135deg,#fefce8,#fef9c3)":"#f9fafb",bd:curr.idlePct>prev.idlePct?"#fde68a":"#f0f0f0",col:curr.idlePct>prev.idlePct?"#b8960a":"#6b7280"},{label:"Both Targets Met",val:curr.bothPct+"%",hit:curr.bothPct>prev.bothPct,bar:curr.bothPct,bg:curr.bothPct>prev.bothPct?"linear-gradient(135deg,#fefce8,#fef9c3)":"#f9fafb",bd:curr.bothPct>prev.bothPct?"#fde68a":"#f0f0f0",col:curr.bothPct>prev.bothPct?"#b8960a":"#6b7280"}].map(m=>`<div style="background:${m.bg};border:1px solid ${m.bd};border-radius:8px;padding:13px 15px;margin-bottom:8px"><div style="font-size:9px;font-weight:600;color:#bbb;letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px">${m.label}</div><div style="font-family:Barlow Condensed,sans-serif;font-size:30px;font-weight:900;color:${m.col};line-height:1">${m.val} ${m.hit?"✓":""}</div><div style="height:4px;background:#e5e5e5;border-radius:2px;overflow:hidden;margin-top:8px"><div style="height:100%;width:${m.bar}%;background:${m.col};border-radius:2px"></div></div></div>`).join("")}
+        </div>
+      </div>
+    </div>
+    <div style="background:#f9fafb;border-top:1px solid #f0f0f0;padding:12px 36px;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:10px;color:#ccc">Data source: SmartLift · All figures are daily averages across active operator days only</div>
+      <img src="data:image/png;base64,${LOGO_B64}" style="height:20px;opacity:0.25" alt="ABInBev"/>
+    </div>
+  </div></div>`;
+  document.getElementById("snap-preview").innerHTML = html;
+}
+
+function renderSnap() {
+  var h = "";
+  h += '<div style="max-width:900px">';
+  h += '<div style="font-family:Barlow Condensed,sans-serif;font-size:16px;font-weight:700;color:#555;letter-spacing:1px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #e5e5e5">UPLOAD TWO PERIODS TO COMPARE</div>';
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">';
+  h += '<div><div style="font-size:10px;color:#bbb;letter-spacing:1px;margin-bottom:8px;text-transform:uppercase">Previous Period (Baseline)</div>';
+  h += '<div style="position:relative;border:2px dashed '+(snapPrev.loaded?"#2ed573":"#d5d5d5")+';border-radius:9px;padding:18px;text-align:center;background:'+(snapPrev.loaded?"rgba(46,213,115,0.04)":"#fafafa")+";">';
+  h += '<input type="file" accept=".xlsx,.xls" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2" onchange="if(this.files[0])handleSnapFile('prev',this.files[0])">';
+  h += '<div id="snap-icon-prev" style="font-size:22px;margin-bottom:4px;pointer-events:none">'+(snapPrev.loaded?"✅":"📊")+'</div>';
+  h += '<div id="snap-lbl-prev" style="font-size:11px;color:#888;pointer-events:none">'+(snapPrev.loaded?"Loaded: "+esc(snapPrev.label):"Drop previous month export here")+'</div>';
+  h += '</div></div>';
+  h += '<div><div style="font-size:10px;color:#bbb;letter-spacing:1px;margin-bottom:8px;text-transform:uppercase">Current Period</div>';
+  h += '<div style="position:relative;border:2px dashed '+(snapCurr.loaded?"#f0d214":"#d5d5d5")+';border-radius:9px;padding:18px;text-align:center;background:'+(snapCurr.loaded?"rgba(240,210,20,0.04)":"#fafafa")+";">';
+  h += '<input type="file" accept=".xlsx,.xls" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2" onchange="if(this.files[0])handleSnapFile('curr',this.files[0])">';
+  h += '<div id="snap-icon-curr" style="font-size:22px;margin-bottom:4px;pointer-events:none">'+(snapCurr.loaded?"✅":"📊")+'</div>';
+  h += '<div id="snap-lbl-curr" style="font-size:11px;color:#888;pointer-events:none">'+(snapCurr.loaded?"Loaded: "+esc(snapCurr.label):"Drop current month export here")+'</div>';
+  h += '</div></div></div>';
+  if(!snapPrev.loaded||!snapCurr.loaded){h+='<div style="color:#ccc;font-size:12px;padding:24px;background:#fafafa;border-radius:8px;border:1px solid #e5e5e5;text-align:center">Upload both files above to generate the comparison snapshot</div>';}
+  h += '</div><div id="snap-preview" style="margin-top:20px"></div>';
+  document.getElementById("tab-snap").innerHTML = h;
+  if(snapPrev.loaded&&snapCurr.loaded)buildSnapshot();
+}
+
+// ── EVENT HANDLERS ────────────────────────────────────────────────────────────
+function setShift(s){shiftF=s;render();}
+function setSort(s){sortBy=s;renderLB();}
+function setPeriod(v){period=v;render();}
+function setLeView(v){leView=v;renderLE();}
+async function setArea(name,val){areaMap[name]=val;render();await saveAreaAssignment(name,val);}
+async function bulkArea(shift,val){
+  const ops=Object.values(opMap).filter(op=>!isRemoved(op.name)&&effShift(op)===shift);
+  ops.forEach(op=>{areaMap[op.name]=val;});
+  render();
+  for(const op of ops){await saveAreaAssignment(op.name,val);}
+}
+async function moveOp(name,toShift){if(toShift){shiftOverrides[name]=toShift;renderAR();render();await saveShiftOverride(name,toShift);}}
+async function removeOp(name){shiftOverrides[name]="__removed__";renderAR();render();await saveShiftOverride(name,"__removed__");}
+async function restoreOp(name){delete shiftOverrides[name];renderAR();render();await saveShiftOverride(name,null);}
+function setArShift(s){arShift=s;renderAR();}
+function toggleAE(id){const el=document.getElementById(id);if(el)el.style.display=el.style.display==="none"||!el.style.display?"inline-block":"none";}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    activeTab=btn.dataset.tab;
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("on"));
+    btn.classList.add("on");
+    document.getElementById("upload-section").style.display=activeTab==="lb"?"block":"none";
+    ["lb","le","ar","snap","data","help"].forEach(t=>document.getElementById("tab-"+t).style.display=t===activeTab?"block":"none");
+    if(Object.keys(opMap).length)render();
+    else if(activeTab==="snap")renderSnap();
+    else if(activeTab==="help")renderHelp();
+    else if(activeTab==="data")renderData();
+  });
+});
+
+// ── UPLOAD EVENTS ─────────────────────────────────────────────────────────────
+(function(){
+  const dz=document.getElementById("dz"), fi=document.getElementById("fi");
+  fi.addEventListener("change",function(){if(fi.files&&fi.files[0])handleFile(fi.files[0]);});
+  dz.addEventListener("dragover",function(e){e.preventDefault();e.stopPropagation();dz.classList.add("drag");});
+  dz.addEventListener("dragleave",function(){dz.classList.remove("drag");});
+  dz.addEventListener("drop",function(e){e.preventDefault();e.stopPropagation();dz.classList.remove("drag");const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(f)handleFile(f);});
+})();
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.getElementById("benchstrip").innerHTML=Object.entries(AREAS).map(([a,d])=>`<div><div class="bencharea">${esc(a)}</div><div class="benchtgt">≥ ${fmt(d.t)}</div><div class="benchbase">bench ${fmt(d.b)}</div></div>`).join("");
+
+// Load data from Supabase on startup
+loadFromSupabase();
+</script>
+</body>
+</html>
